@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ── Action ── -->
+    <record id="action_whatsapp_templates" model="ir.actions.act_window">
+        <field name="name">Plantillas WhatsApp</field>
+        <field name="res_model">whatsapp.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ── List view ── -->
+    <record id="view_whatsapp_template_list" model="ir.ui.view">
+        <field name="name">whatsapp.template.list</field>
+        <field name="model">whatsapp.template</field>
+        <field name="arch" type="xml">
+            <list string="Plantillas WhatsApp"
+                  decoration-success="status == 'approved'"
+                  decoration-warning="status == 'pending'"
+                  decoration-danger="status == 'rejected'"
+                  decoration-muted="status == 'paused'">
+                <field name="name"/>
+                <field name="account_id"/>
+                <field name="category"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'approved'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'rejected'"
+                       decoration-muted="status == 'paused'"/>
+                <field name="wa_template_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form view ── -->
+    <record id="view_whatsapp_template_form" model="ir.ui.view">
+        <field name="name">whatsapp.template.form</field>
+        <field name="model">whatsapp.template</field>
+        <field name="arch" type="xml">
+            <form string="Plantilla WhatsApp">
+                <header>
+                    <button name="action_submit_to_meta"
+                            string="Enviar a Meta para aprobación"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-paper-plane"
+                            invisible="status not in ('draft','rejected')"/>
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="draft,pending,approved,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nombre interno (snake_case)"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="ej: bienvenida_cliente"
+                                   help="Solo minúsculas, números y guiones bajos"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Configuración">
+                            <field name="account_id" required="1"/>
+                            <field name="category"/>
+                            <field name="language_code" string="Idioma (código)"
+                                   placeholder="es"/>
+                        </group>
+                        <group string="Estado Meta" invisible="status == 'draft'">
+                            <field name="wa_template_id" readonly="1" string="ID en Meta"/>
+                            <field name="rejection_reason" readonly="1"
+                                   invisible="not rejection_reason"/>
+                        </group>
+                    </group>
+
+                    <group string="Contenido del mensaje">
+                        <div class="alert alert-info" role="alert" colspan="2"
+                             style="margin-bottom:12px;">
+                            Para variables usa <strong>{{1}}</strong>, <strong>{{2}}</strong>, etc.
+                            Ejemplo: <em>Hola {{1}}, tu cita es el {{2}} a las {{3}}.</em>
+                        </div>
+                        <field name="header_text" colspan="2"
+                               placeholder="Título opcional (máx 60 caracteres). Ej: Tu pedido está listo"/>
+                        <field name="body_text" widget="text" colspan="2" required="1"
+                               placeholder="Texto principal. Ej: Hola {{1}}, te confirmamos tu cita el {{2}}.&#10;&#10;Si necesitas cambiarla, responde a este mensaje."/>
+                        <field name="footer_text" colspan="2"
+                               placeholder="Pie opcional. Ej: Uniasser Consulting — No responder a este número"/>
+                        <field name="sample_values" colspan="2"
+                               placeholder="Valores de ejemplo para las variables, separados por comas. Ej: Juan,lunes 15 de septiembre,10:00"
+                               help="Meta exige ejemplos para aprobar plantillas con variables {{1}}, {{2}}..."/>
+                    </group>
+
+                    <group string="JSON generado (solo lectura)"
+                           groups="base.group_system">
+                        <field name="components" readonly="1" widget="text" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

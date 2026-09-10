@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_whatsapp_send_wizard_form" model="ir.ui.view">
+        <field name="name">whatsapp.send.wizard.form</field>
+        <field name="model">whatsapp.send.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Enviar mensaje WhatsApp">
+                <group>
+                    <group string="Cuenta y contacto">
+                        <field name="account_id" required="1"/>
+                        <field name="partner_id"
+                               invisible="lead_id"/>
+                        <field name="lead_id" invisible="1"/>
+                        <field name="phone" readonly="1" string="Teléfono destino"/>
+                    </group>
+                    <group string="Estado de la ventana">
+                        <field name="is_within_window" readonly="1"
+                               widget="boolean"
+                               string="Ventana de 24h activa"/>
+                        <div class="alert alert-warning" role="alert"
+                             invisible="is_within_window" colspan="2">
+                            <strong>Fuera de ventana de 24h.</strong>
+                            No puedes enviar mensajes de texto libre.
+                            Usa una plantilla aprobada.
+                        </div>
+                        <div class="alert alert-success" role="alert"
+                             invisible="not is_within_window" colspan="2">
+                            El contacto te escribió en las últimas 24h.
+                            Puedes enviar texto libre o plantilla.
+                        </div>
+                    </group>
+                </group>
+                <group string="Tipo de mensaje">
+                    <field name="send_mode" widget="radio"/>
+                </group>
+                <group string="Texto libre" invisible="send_mode != 'text'">
+                    <field name="body"
+                           nolabel="1"
+                           placeholder="Escribe tu mensaje aquí..."
+                           required="send_mode == 'text'"
+                           widget="text"/>
+                </group>
+                <group string="Plantilla" invisible="send_mode != 'template'">
+                    <field name="template_id"
+                           required="send_mode == 'template'"
+                           domain="[('account_id', '=', account_id), ('status', '=', 'approved')]"
+                           options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button name="action_send"
+                            string="Enviar"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-paper-plane"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

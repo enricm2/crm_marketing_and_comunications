@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Refresco semanal de fotos de perfiles activos (solo cuentas QR) -->
+    <record id="cron_wa_sync_active_profiles" model="ir.cron">
+        <field name="name">WhatsApp: Sincronizar fotos de perfil activos</field>
+        <field name="model_id" ref="model_whatsapp_contact_profile"/>
+        <field name="state">code</field>
+        <field name="code">model.action_sync_active_profiles()</field>
+        <field name="interval_number">7</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- Limpieza mensual de perfiles inactivos (>90 días sin actividad) -->
+    <record id="cron_wa_cleanup_profiles" model="ir.cron">
+        <field name="name">WhatsApp: Limpieza de perfiles de contacto inactivos</field>
+        <field name="model_id" ref="model_whatsapp_contact_profile"/>
+        <field name="state">code</field>
+        <field name="code">model.action_cleanup_inactive()</field>
+        <field name="interval_number">30</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

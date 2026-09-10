@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Herencia del formulario de crm.lead -->
+    <record id="view_crm_lead_form_whatsapp" model="ir.ui.view">
+        <field name="name">crm.lead.form.whatsapp</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Añadir stat buttons en el chatter header area -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <!-- Botón: ver mensajes WhatsApp -->
+                <button name="action_view_whatsapp_messages"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-whatsapp"
+                        groups="uniasser_whatsapp.group_whatsapp_user">
+                    <field name="whatsapp_message_count"
+                           widget="statinfo"
+                           string="WhatsApp"/>
+                </button>
+            </xpath>
+            <!-- Botón "Enviar WhatsApp" junto a los botones de acción principales -->
+            <xpath expr="//header" position="inside">
+                <button name="action_open_whatsapp_send_wizard"
+                        string="Enviar WhatsApp"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-whatsapp"
+                        groups="uniasser_whatsapp.group_whatsapp_user"/>
+            </xpath>
+            <!-- Campo informativo del último WA en la pestaña de info extra -->
+            <xpath expr="//field[@name='date_deadline']" position="after">
+                <field name="last_whatsapp_date"
+                       readonly="1"
+                       optional="show"
+                       widget="datetime"
+                       string="Último WA recibido"/>
+                <field name="last_whatsapp_ago"
+                       readonly="1"
+                       optional="show"
+                       string="Último WA"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

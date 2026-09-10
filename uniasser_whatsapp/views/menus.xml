@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Client action para la bandeja de WhatsApp (OWL) -->
+    <record id="action_whatsapp_chat_client" model="ir.actions.client">
+        <field name="name">WhatsApp</field>
+        <field name="tag">uniasser_whatsapp.action_whatsapp_chat</field>
+    </record>
+
+    <!-- ── Menú raíz (app en la barra superior) ── -->
+    <menuitem id="menu_whatsapp_root"
+              name="WhatsApp"
+              sequence="50"
+              web_icon="uniasser_whatsapp,static/description/icon.png"/>
+
+    <menuitem id="menu_whatsapp_inbox"
+              name="Bandeja de entrada"
+              parent="menu_whatsapp_root"
+              action="action_whatsapp_chat_client"
+              sequence="10"/>
+
+    <menuitem id="menu_whatsapp_messages"
+              name="Todos los mensajes"
+              parent="menu_whatsapp_root"
+              action="action_whatsapp_messages_list"
+              sequence="20"/>
+
+    <menuitem id="menu_whatsapp_accounts_app"
+              name="Cuentas"
+              parent="menu_whatsapp_root"
+              action="action_whatsapp_accounts"
+              sequence="30"/>
+
+    <menuitem id="menu_whatsapp_templates_app"
+              name="Plantillas"
+              parent="menu_whatsapp_root"
+              action="action_whatsapp_templates"
+              sequence="40"/>
+
+    <!-- ── Sección en Ajustes (menú lateral izquierdo) ── -->
+    <menuitem id="menu_whatsapp_settings_root"
+              name="WhatsApp"
+              parent="base.menu_administration"
+              sequence="95"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_whatsapp_settings_accounts"
+              name="Cuentas WhatsApp"
+              parent="menu_whatsapp_settings_root"
+              action="action_whatsapp_accounts"
+              sequence="10"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_whatsapp_settings_templates"
+              name="Plantillas"
+              parent="menu_whatsapp_settings_root"
+              action="action_whatsapp_templates"
+              sequence="20"
+              groups="base.group_system"/>
+</odoo>
