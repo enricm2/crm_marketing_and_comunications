@@ -2034,7 +2034,7 @@ Devuelve SOLO el texto completo del mensaje, sin explicaciones adicionales.
         """Envía un lote de hasta 15 leads a la API de Prosp."""
         self.ensure_one()
         profile = self.env['marketing.linkedin.profile'].search([
-            ('user_id', '=', self.user_id.id or self.create_uid.id),
+            ('user_id', '=', self.create_uid.id),
             ('active', '=', True)
         ], limit=1)
         if not profile or not profile.prosp_api_key:
