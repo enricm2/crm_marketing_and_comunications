@@ -1,10 +1,13 @@
 {
-    'name': 'Vantis CRM + Marketing + Communications',
+    'name': 'CRM Marketing Full Suite',
     'version': '18.0.1.0.0',
     'category': 'CRM',
-    'summary': 'Vantis CRM, Marketing and Communications Engine',
+    'summary': 'CRM, Marketing, Communication, LinkedIn, Meta, WhatsApp, Email, AI, Robinson, RGPD',
     'description': """
-Unified module blending CRM communication logging, multi-user Gmail synchronization, B2B marketing campaigns, AI custom copywriting, and LinkedIn Growth routines.
+CRM Marketing Full Suite is a premium unified module blending CRM communication logging, multi-user Gmail synchronization, B2B marketing campaigns, AI custom copywriting, and LinkedIn Growth routines.
+Developed by Vantis.
+Official Website: https://vantis.uniasser.net
+Support Email: info@uniasser.com
 """,
     'author': 'Vantis',
     'website': 'https://vantis.uniasser.net',
