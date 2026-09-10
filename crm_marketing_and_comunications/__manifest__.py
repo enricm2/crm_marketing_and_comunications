@@ -12,6 +12,7 @@ Support Email: info@uniasser.com
     'author': 'Vantis',
     'website': 'https://vantis.uniasser.net',
     'depends': ['crm', 'uniasser_whatsapp'],
+    'images': ['static/description/banner.png'],
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
