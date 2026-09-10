@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Mapa de eventos de Prosp.
+
+             La dirección es lo importante. Prosp automatiza prospección
+             SALIENTE: «Profile Visited», «Like on Last Post» y «Comment on
+             Last Post» son cosas que Prosp hace POR TI sobre el prospecto,
+             no cosas que el prospecto te hace a ti. Mapearlas como señales
+             entrantes convertiría la puntuación en un contador de tu propia
+             actividad y dejaría a todos los leads por encima del umbral.
+
+             Solo cuatro eventos son de verdad entrantes, y son justamente los
+             de mayor valor comercial: alguien que responde o que acepta.
+
+             noupdate="1" para que se puedan ajustar desde la interfaz sin que
+             una actualización del módulo los pise. -->
+
+        <!-- ── Entrantes: el prospecto actúa. Puntúan. ── -->
+        <record id="prosp_event_message_replied" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Message Replied</field>
+            <field name="event_code">linkedinmessagereplied</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">message</field>
+            <field name="notes">Ha respondido a un mensaje. La señal más fuerte que da Prosp.</field>
+        </record>
+
+        <record id="prosp_event_comment_replied" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Comment Replied</field>
+            <field name="event_code">linkedincommentreplied</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">comment</field>
+            <field name="notes">Ha respondido a un comentario nuestro.</field>
+        </record>
+
+        <record id="prosp_event_connection_accepted" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Connection Accepted</field>
+            <field name="event_code">linkedinconnectionaccepted</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">connection</field>
+            <field name="notes">Ha aceptado la invitación de conexión.</field>
+        </record>
+
+        <record id="prosp_event_invite_accepted" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Invite Accepted</field>
+            <field name="event_code">linkedininviteaccepted</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">connection</field>
+        </record>
+
+        <!-- ── Salientes: actuamos nosotros. Historial, sin puntos. ── -->
+        <record id="prosp_event_message_sent" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Message Sent</field>
+            <field name="event_code">linkedinmessagesent</field>
+            <field name="direction">outbound</field>
+        </record>
+
+        <record id="prosp_event_voice_sent" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Voice Sent</field>
+            <field name="event_code">linkedinvoicesent</field>
+            <field name="direction">outbound</field>
+        </record>
+
+        <record id="prosp_event_inmail_sent" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn in Mail Message Sent</field>
+            <field name="event_code">linkedininmailmessagesent</field>
+            <field name="direction">outbound</field>
+        </record>
+
+        <record id="prosp_event_connection_sent" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Connection Sent</field>
+            <field name="event_code">linkedinconnectionsent</field>
+            <field name="direction">outbound</field>
+        </record>
+
+        <record id="prosp_event_connection_withdrawn" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Connection Withdrawn</field>
+            <field name="event_code">linkedinconnectionwithdrawn</field>
+            <field name="direction">outbound</field>
+        </record>
+
+        <record id="prosp_event_comment_last_post" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Comment on Last Post</field>
+            <field name="event_code">linkedincommentonlastpost</field>
+            <field name="direction">outbound</field>
+            <field name="notes">NOSOTROS comentamos en la última publicación del prospecto,
+                como calentamiento. No es que él comente en la nuestra.</field>
+        </record>
+
+        <record id="prosp_event_like_last_post" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Like on Last Post</field>
+            <field name="event_code">linkedinlikeonlastpost</field>
+            <field name="direction">outbound</field>
+            <field name="notes">NOSOTROS damos like a su publicación. No es interés suyo.</field>
+        </record>
+
+        <record id="prosp_event_profile_visited" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Profile Visited</field>
+            <field name="event_code">linkedinprofilevisited</field>
+            <field name="direction">outbound</field>
+            <field name="notes">NOSOTROS visitamos su perfil. Ojo: no confundir con
+                "alguien ha visto mi perfil", que Prosp no ofrece.</field>
+        </record>
+
+        <record id="prosp_event_profile_followed" model="marketing.linkedin.prosp.event">
+            <field name="name">LinkedIn Profile Followed</field>
+            <field name="event_code">linkedinprofilefollowed</field>
+            <field name="direction">outbound</field>
+            <field name="notes">NOSOTROS le seguimos.</field>
+        </record>
+
+        <!-- ── Administrativos ── -->
+        <record id="prosp_event_tag_added" model="marketing.linkedin.prosp.event">
+            <field name="name">Tag Added to Lead</field>
+            <field name="event_code">tagaddedtolead</field>
+            <field name="direction">ignore</field>
+        </record>
+
+        <record id="prosp_event_contact_added" model="marketing.linkedin.prosp.event">
+            <field name="name">Contact Added</field>
+            <field name="event_code">contactadded</field>
+            <field name="direction">ignore</field>
+        </record>
+
+        <record id="prosp_event_contact_extracted" model="marketing.linkedin.prosp.event">
+            <field name="name">Contact Extracted</field>
+            <field name="event_code">contactextracted</field>
+            <field name="direction">ignore</field>
+        </record>
+
+
+        <!-- ── Códigos REALES de Prosp ──────────────────────────────────────
+
+             Confirmado con un evento en producción: Prosp NO manda el nombre
+             que muestra en su interfaz. La etiqueta «LinkedIn Invite Accepted»
+             llega como `accept_invite`. Los códigos son verbo_sustantivo en
+             inglés y minúsculas.
+
+             `accept_invite` está verificado. El resto se deducen de esa misma
+             convención y de las etiquetas de la interfaz: si alguno no acierta,
+             el evento se guarda en Webhooks capturados y se mapea desde ahí sin
+             perder nada. La dirección sí es segura en todos: viene de lo que
+             hace Prosp, no de cómo se llame el evento. -->
+
+        <!-- Entrantes -->
+        <record id="prosp_code_accept_invite" model="marketing.linkedin.prosp.event">
+            <field name="name">Invitación aceptada (accept_invite)</field>
+            <field name="event_code">acceptinvite</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">connection</field>
+            <field name="notes">VERIFICADO en producción el 26/08/2026.</field>
+        </record>
+
+        <record id="prosp_code_reply_message" model="marketing.linkedin.prosp.event">
+            <field name="name">Respuesta a mensaje (reply_message)</field>
+            <field name="event_code">replymessage</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">message</field>
+            <field name="notes">Código deducido; confirmar cuando llegue el primero.</field>
+        </record>
+
+        <record id="prosp_code_message_replied" model="marketing.linkedin.prosp.event">
+            <field name="name">Respuesta a mensaje (message_replied)</field>
+            <field name="event_code">messagereplied</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">message</field>
+            <field name="notes">Código deducido; confirmar cuando llegue el primero.</field>
+        </record>
+
+        <record id="prosp_code_reply_comment" model="marketing.linkedin.prosp.event">
+            <field name="name">Respuesta a comentario (reply_comment)</field>
+            <field name="event_code">replycomment</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">comment</field>
+            <field name="notes">Código deducido; confirmar cuando llegue el primero.</field>
+        </record>
+
+        <record id="prosp_code_accept_connection" model="marketing.linkedin.prosp.event">
+            <field name="name">Conexión aceptada (accept_connection)</field>
+            <field name="event_code">acceptconnection</field>
+            <field name="direction">inbound</field>
+            <field name="signal_type">connection</field>
+            <field name="notes">Código deducido; confirmar cuando llegue el primero.</field>
+        </record>
+
+        <!-- Salientes: acciones nuestras. No puntúan. -->
+        <record id="prosp_code_send_invite" model="marketing.linkedin.prosp.event">
+            <field name="name">Invitación enviada (send_invite)</field>
+            <field name="event_code">sendinvite</field>
+            <field name="direction">outbound</field>
+        </record>
+        <record id="prosp_code_withdraw_invite" model="marketing.linkedin.prosp.event">
+            <field name="name">Invitación retirada (withdraw_invite)</field>
+            <field name="event_code">withdrawinvite</field>
+            <field name="direction">outbound</field>
+        </record>
+        <record id="prosp_code_send_message" model="marketing.linkedin.prosp.event">
+            <field name="name">Mensaje enviado (send_message)</field>
+            <field name="event_code">sendmessage</field>
+            <field name="direction">outbound</field>
+        </record>
+        <record id="prosp_code_send_voice" model="marketing.linkedin.prosp.event">
+            <field name="name">Nota de voz enviada (send_voice)</field>
+            <field name="event_code">sendvoice</field>
+            <field name="direction">outbound</field>
+        </record>
+        <record id="prosp_code_send_inmail" model="marketing.linkedin.prosp.event">
+            <field name="name">InMail enviado (send_inmail)</field>
+            <field name="event_code">sendinmail</field>
+            <field name="direction">outbound</field>
+        </record>
+        <record id="prosp_code_visit_profile" model="marketing.linkedin.prosp.event">
+            <field name="name">Perfil visitado por nosotros (visit_profile)</field>
+            <field name="event_code">visitprofile</field>
+            <field name="direction">outbound</field>
+            <field name="notes">NOSOTROS visitamos su perfil. No es que él visite el nuestro.</field>
+        </record>
+        <record id="prosp_code_follow_profile" model="marketing.linkedin.prosp.event">
+            <field name="name">Perfil seguido por nosotros (follow_profile)</field>
+            <field name="event_code">followprofile</field>
+            <field name="direction">outbound</field>
+        </record>
+        <record id="prosp_code_like_post" model="marketing.linkedin.prosp.event">
+            <field name="name">Like nuestro a su publicación (like_post)</field>
+            <field name="event_code">likepost</field>
+            <field name="direction">outbound</field>
+            <field name="notes">NOSOTROS damos like a su publicación. No es interés suyo.</field>
+        </record>
+        <record id="prosp_code_comment_post" model="marketing.linkedin.prosp.event">
+            <field name="name">Comentario nuestro en su publicación (comment_post)</field>
+            <field name="event_code">commentpost</field>
+            <field name="direction">outbound</field>
+        </record>
+
+        <!-- Administrativos -->
+        <record id="prosp_code_add_contact" model="marketing.linkedin.prosp.event">
+            <field name="name">Contacto añadido (add_contact)</field>
+            <field name="event_code">addcontact</field>
+            <field name="direction">ignore</field>
+        </record>
+        <record id="prosp_code_extract_contact" model="marketing.linkedin.prosp.event">
+            <field name="name">Contacto extraído (extract_contact)</field>
+            <field name="event_code">extractcontact</field>
+            <field name="direction">ignore</field>
+        </record>
+        <record id="prosp_code_add_tag" model="marketing.linkedin.prosp.event">
+            <field name="name">Etiqueta añadida (add_tag)</field>
+            <field name="event_code">addtag</field>
+            <field name="direction">ignore</field>
+        </record>
+
+    </data>
+</odoo>

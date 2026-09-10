@@ -1,0 +1,27 @@
+/* Uniasser Marketing Campaigns — estilos UI */
+
+/* Aviso Robinson desactivado — fondo rojo destacado */
+.o_form_view .alert-danger.robinson-warning {
+    border-left: 6px solid #dc3545;
+    font-size: 0.95rem;
+}
+
+/* Tabla de leads de campaña — destacar estados */
+.o_list_view .o_data_row.o_decoration_success td {
+    background-color: #d4edda !important;
+}
+.o_list_view .o_data_row.o_decoration_danger td {
+    background-color: #f8d7da !important;
+    opacity: 0.8;
+}
+
+/* Kanban campañas */
+.o_kanban_record .badge {
+    font-size: 0.8rem;
+}
+
+/* Preview HTML en formulario de plantilla */
+.o_field_html .odoo-editor-editable {
+    min-height: 300px;
+    font-family: Arial, sans-serif;
+}

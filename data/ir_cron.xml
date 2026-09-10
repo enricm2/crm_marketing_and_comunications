@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Sincronización automática de Gmail hacia el historial de
+             comunicaciones de los leads. Cada pasada procesa un lote de leads
+             (config: crm_marketing_and_comunications.gmail_sync_batch, 25 por defecto),
+             priorizando los que nunca se han sincronizado y luego los más
+             antiguos. Si no hay credenciales IMAP configuradas, no hace nada. -->
+        <record id="ir_cron_crm_gmail_sync" model="ir.cron">
+            <field name="name">CRM - Sincronización Gmail (historial de comunicaciones)</field>
+            <field name="model_id" ref="crm.model_crm_lead"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_gmail_sync()</field>
+            <field name="interval_number">10</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Goteo de lanzamientos a Prosp para LinkedIn.
+             Cada 10 minutos procesa un lote de 15 leads pendientes de enviar,
+             evitando bloqueos de rate limit en Prosp o Cloudflare. -->
+        <record id="ir_cron_prosp_drip" model="ir.cron">
+            <field name="name">Marketing - Goteo de Lanzamiento Prosp (LinkedIn)</field>
+            <field name="model_id" ref="model_marketing_campaign"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_prosp_drip()</field>
+            <field name="interval_number">10</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+</odoo>

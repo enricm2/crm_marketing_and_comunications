@@ -1,0 +1,27 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following module:
+# 	* crm_marketing_and_comunications
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-09 17:00+0000\n"
+"PO-Revision-Date: 2026-09-09 17:00+0000\n"
+"Last-Translator: Vantis\n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: crm_marketing_and_comunications
+#: model:ir.model,name:crm_marketing_and_comunications.model_marketing_campaign
+msgid "Campaign"
+msgstr "Campaña"
+
+#. module: crm_marketing_and_comunications
+#: model:ir.model,name:crm_marketing_and_comunications.model_marketing_campaign_lead
+msgid "Campaign Line"
+msgstr "Línea de Campaña"

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú de entrada arriba en el menú principal de CRM -->
+    <menuitem id="menu_crm_marketing_root"
+              name="Campañas de Márketing"
+              parent="crm.crm_menu_root"
+              sequence="25"/>
+
+    <!-- ── GRUPO DE EJECUCIÓN ── -->
+    <menuitem id="menu_marketing_execution"
+              name="Ejecución"
+              parent="menu_crm_marketing_root"
+              sequence="10"/>
+
+    <menuitem id="menu_marketing_campaigns"
+              name="Campañas de márketing"
+              parent="menu_marketing_execution"
+              action="action_marketing_campaign"
+              sequence="10"/>
+
+    <menuitem id="menu_marketing_followup_launch"
+              name="Lanzar seguimiento por etapa"
+              parent="menu_marketing_execution"
+              action="action_followup_launch_wizard"
+              sequence="20"/>
+
+    <menuitem id="menu_marketing_campaign_inbox"
+              name="Buzón de Respuestas"
+              parent="menu_marketing_execution"
+              action="action_marketing_campaign_lead_inbox"
+              sequence="30"/>
+
+    <!-- ── GRUPO DE CONFIGURACIÓN ── -->
+    <menuitem id="menu_marketing_config"
+              name="Configuración"
+              parent="menu_crm_marketing_root"
+              sequence="20"/>
+
+    <menuitem id="menu_crm_email_template"
+              name="Plantillas de email"
+              parent="menu_marketing_config"
+              action="action_crm_email_template"
+              sequence="10"/>
+
+    <menuitem id="menu_marketing_ai_templates"
+              name="Plantillas IA (revisión)"
+              parent="menu_marketing_config"
+              action="crm_marketing_and_comunications.action_marketing_ai_template"
+              sequence="20"/>
+
+    <menuitem id="menu_marketing_esp_providers"
+              name="Proveedores ESP (email)"
+              parent="menu_marketing_config"
+              action="action_marketing_esp_provider"
+              sequence="30"/>
+
+    <menuitem id="menu_marketing_channels"
+              name="Canales de marketing"
+              parent="menu_marketing_config"
+              action="action_marketing_channel"
+              sequence="40"/>
+
+    <menuitem id="menu_marketing_pain_points"
+              name="Puntos de dolor (campañas)"
+              parent="menu_marketing_config"
+              action="action_marketing_pain_point"
+              sequence="50"/>
+
+    <menuitem id="menu_marketing_rgpd"
+              name="Exclusiones RGPD"
+              parent="menu_marketing_config"
+              action="action_marketing_rgpd_exclusion"
+              sequence="60"/>
+
+    <menuitem id="menu_marketing_robinson"
+              name="Caché Lista Robinson"
+              parent="menu_marketing_config"
+              action="action_marketing_robinson_cache"
+              sequence="70"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_crm_gmail_settings"
+              name="Sincronización Gmail"
+              parent="menu_marketing_config"
+              action="action_crm_gmail_settings"
+              sequence="80"/>
+</odoo>

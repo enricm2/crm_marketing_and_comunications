@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_campaign_create_wizard_form" model="ir.ui.view">
+        <field name="name">campaign.create.wizard.form</field>
+        <field name="model">campaign.create.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Nueva campaña de marketing">
+                <sheet>
+                    <!-- Modo -->
+                    <group>
+                        <field name="mode" widget="radio" options="{'horizontal': True}"/>
+                        <field name="existing_campaign_id"
+                            invisible="mode != 'add_to_existing'"
+                            required="mode == 'add_to_existing'"/>
+                    </group>
+
+                    <!-- Nombre (solo modo new) -->
+                    <group invisible="mode != 'new'">
+                        <field name="campaign_name" required="mode == 'new'"
+                            placeholder="Ej: Campaña wa-manager agencias BCN mayo 2025"/>
+                    </group>
+
+                    <separator string="Selección de leads"/>
+                    <group>
+                        <group>
+                            <field name="stage_source_id" required="1"/>
+                        </group>
+                        <group>
+                            <field name="selected_lead_count" readonly="1" string="Leads seleccionados"/>
+                            <field name="available_lead_ids" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <div class="row mb8">
+                        <div class="col">
+                            <button name="action_select_all_leads" type="object"
+                                string="Seleccionar todos" class="btn btn-secondary btn-sm"/>
+                            <button name="action_clear_selection" type="object"
+                                string="Limpiar selección" class="btn btn-secondary btn-sm ms-2"/>
+                        </div>
+                    </div>
+
+                    <field name="selected_lead_ids" widget="many2many_checkboxes"
+                        domain="[('id','in',available_lead_ids)]"
+                        options="{'no_create': True, 'no_open': True}">
+                        <list>
+                            <field name="name"/>
+                            <field name="partner_name"/>
+                            <field name="email_from"/>
+                            <field name="phone"/>
+                            <field name="probability"/>
+                            <field name="user_id"/>
+                        </list>
+                    </field>
+
+                    <separator string="Brief de campaña" invisible="mode == 'add_to_existing'"/>
+                    <group invisible="mode == 'add_to_existing'">
+                        <field name="service_id"/>
+                        <field name="purpose" required="mode == 'new'"
+                            placeholder="¿Qué objetivo tiene esta campaña?"
+                            colspan="2"/>
+                        <field name="target_audience" required="mode == 'new'"
+                            placeholder="Describe el público: sector, tamaño empresa, decisor, dolor típico..."
+                            colspan="2"/>
+                    </group>
+
+                    <separator string="Canales de envío"/>
+                    <group>
+                        <group>
+                            <field name="channel_ids" widget="many2many_checkboxes"
+                                domain="[('available','=',True)]"
+                                required="1"/>
+                        </group>
+                        <group>
+                            <field name="esp_provider_id"
+                                invisible="not use_email"
+                                required="use_email"/>
+                        </group>
+                    </group>
+
+                    <separator string="Plantilla del mensaje" invisible="mode != 'new'"/>
+                    <group invisible="mode != 'new'">
+                        <field name="template_mode" widget="radio"/>
+                        <field name="source_template_id"
+                            invisible="template_mode != 'copy' or not use_email"
+                            required="template_mode == 'copy' and use_email"
+                            options="{'no_create': True}"/>
+                        <field name="source_template_wa_id"
+                            invisible="template_mode != 'copy' or not use_whatsapp"
+                            options="{'no_create': True}"/>
+                        <field name="source_crm_template_id"
+                            invisible="template_mode != 'crm'"
+                            required="template_mode == 'crm'"
+                            options="{'no_create': True}"/>
+                        <div colspan="2" class="text-muted small"
+                             invisible="template_mode == 'ai'">
+                            Se hace una <b>copia</b> en esta campaña: editarla aquí no
+                            toca el original. Queda en borrador para que la revises
+                            antes de aprobarla.
+                        </div>
+                        <div colspan="2" class="text-muted small"
+                             invisible="template_mode != 'crm'">
+                            Los marcadores (<code>{nombre}</code>, <code>{sector}</code>…)
+                            y los bloques <code>[PROMPT]</code> se conservan. El enlace
+                            de baja <code>{baja}</code> se convierte al de campaña, y si
+                            la plantilla no traía ninguno se añade: en un envío masivo
+                            es obligatorio.
+                        </div>
+                        <div colspan="2" class="text-muted small"
+                             invisible="template_mode != 'later'">
+                            La campaña se crea sin plantilla. Podrás generarla o
+                            importarla desde su ficha.
+                        </div>
+                    </group>
+
+                    <separator string="Mapeo de etapas (respuestas)"/>
+                    <group>
+                        <field name="stage_interested_id"
+                            placeholder="¿A qué etapa mover si muestra interés?"/>
+                        <field name="stage_demo_id"
+                            placeholder="¿A qué etapa si solicita demo/reunión?"/>
+                        <field name="stage_lost_id"
+                            placeholder="¿A qué etapa si rechaza o pide baja?"/>
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button name="action_create_campaign" type="object"
+                        string="Crear campaña" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Sin binding sigue disponible desde el menú, con la lista de leads
+         vacía hasta elegir etapa. -->
+    <record id="action_campaign_create_wizard" model="ir.actions.act_window">
+        <field name="name">Nueva campaña de marketing</field>
+        <field name="res_model">campaign.create.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Y desde el menú Acciones de la lista de leads, que es de donde tiene
+         sentido partir: los marcados llegan ya seleccionados. -->
+    <record id="action_campaign_create_from_leads" model="ir.actions.act_window">
+        <field name="name">Crear campaña de marketing</field>
+        <field name="res_model">campaign.create.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+    </record>
+</odoo>

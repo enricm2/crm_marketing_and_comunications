@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Router de embudo semanal. Diagnostica todos los perfiles que
+             tengan marcado "Ejecutar el router automáticamente" y manda el
+             informe al dueño de cada uno. Arranca ACTIVO porque es solo
+             lectura: no escribe en el CRM, únicamente crea el diagnóstico. -->
+        <record id="ir_cron_linkedin_router_weekly" model="ir.cron">
+            <field name="name">LinkedIn Growth — Router de embudo semanal</field>
+            <field name="model_id" ref="model_marketing_linkedin_diagnostic"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_weekly_router()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active" eval="True"/>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+</odoo>

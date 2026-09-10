@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Growth — Uniasser",
+  "version": "1.2.3",
+  "description": "Lee quién ha reaccionado y comentado en tus publicaciones de LinkedIn y lo manda a Odoo. Solo lee: no pulsa nada por ti.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.linkedin.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_title": "LinkedIn Growth — abrir opciones"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/feed/update/*",
+        "https://www.linkedin.com/posts/*"
+      ],
+      "js": [
+        "scrape.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

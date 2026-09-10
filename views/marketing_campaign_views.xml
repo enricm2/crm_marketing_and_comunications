@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_campaign_form" model="ir.ui.view">
+        <field name="name">marketing.campaign.form</field>
+        <field name="model">marketing.campaign</field>
+        <field name="arch" type="xml">
+            <form string="Campaña de marketing">
+                <header>
+                    <button name="action_generate_ai_template" type="object"
+                        string="Generar plantilla con IA"
+                        invisible="state != 'draft'"
+                        class="btn-primary"/>
+                    <!-- Disponible mientras la campaña no haya salido: hasta que
+                         se envía, cambiar de plantilla es una decisión legítima. -->
+                    <button name="action_importar_plantilla" type="object"
+                        string="Usar una plantilla existente"
+                        invisible="state not in ('draft', 'template_review', 'approved')"
+                        class="btn-secondary"
+                        title="Copia la plantilla de otra campaña o importa una de las plantillas de email del CRM."/>
+                    <button name="action_approve_campaign" type="object"
+                        string="Aprobar campaña"
+                        invisible="state != 'template_review'"
+                        class="btn-success"/>
+                    <!-- Prueba: en la cabecera porque es donde se busca antes
+                         de lanzar. Siempre visible mientras no esté cerrada, y
+                         sin depender de que test_email tenga valor: si está
+                         vacío el propio método lo dice. -->
+                    <button name="action_send_test_email" type="object"
+                        string="✉️ Enviar prueba"
+                        invisible="state == 'closed' or not use_email"
+                        class="btn-secondary"
+                        title="Envía el email real a la dirección de prueba, por el mismo ESP y con la misma plantilla. No toca los leads."/>
+                    <button name="action_generate_all_content" type="object"
+                        string="✨ Generar contenido IA (todos)"
+                        invisible="state == 'closed' or content_gen_enabled"
+                        class="btn-secondary"
+                        title="Genera con Claude el contenido personalizado de cada lead enviable que aún no lo tenga. Se procesa por lotes en segundo plano."/>
+                    <button name="action_regenerate_all_content" type="object"
+                        string="🔄 Regenerar contenido IA"
+                        invisible="state == 'closed' or content_gen_enabled or campaign_lead_count == 0"
+                        class="btn-secondary"
+                        confirm="Se DESCARTA el contenido personalizado ya generado de todas las líneas NO enviadas y se vuelve a crear desde la plantilla actual. Las líneas ya enviadas no se tocan. ¿Continuar?"
+                        title="Rehace el contenido de todos los leads no enviados desde la plantilla modificada."/>
+                    <button name="action_stop_content_gen" type="object"
+                        string="⏳ Generando contenido… (detener)"
+                        invisible="not content_gen_enabled"
+                        class="btn-warning"
+                        title="La IA está generando el contenido de los leads en segundo plano. Púlsalo para detenerla."/>
+                    <field name="content_gen_enabled" invisible="1"/>
+                    <button name="action_approve_all_content" type="object"
+                        string="✅ Aprobar todo el contenido"
+                        invisible="state == 'closed'"
+                        class="btn-secondary"
+                        confirm="Se aprobará el contenido de todas las líneas que lo tengan generado, dejándolas listas para enviar. ¿Continuar?"/>
+                    <button name="action_informe_errores_ia" type="object"
+                        string="⚠ Errores de IA"
+                        invisible="error_lead_count == 0"
+                        class="btn-warning"
+                        title="Leads que no recibieron el email porque falló la generación con IA."/>
+                    <field name="error_lead_count" invisible="1"/>
+                    <field name="prosp_drip_enabled" invisible="1"/>
+                    <button name="action_check_duplicates_and_issues" type="object"
+                        string="🔍 Comprobar campaña (Evitar duplicados)"
+                        invisible="state == 'closed'"
+                        class="btn-info"
+                        title="Analiza la cola de envío para detectar y excluir de manera proactiva cualquier contacto duplicado o baja pendiente."/>
+                    <button name="action_start_drip" type="object"
+                        string="🐢 Enviar poco a poco (goteo diario)"
+                        invisible="drip_enabled or state == 'closed' or esp_provider_name == 'aws_ses'"
+                        class="btn-primary"
+                        confirm="Se enviarán de uno en uno, espaciados a lo largo de varias horas, respetando el límite diario de la campaña para cuidar la reputación del dominio. ¿Empezamos?"
+                        title="Envío lento y espaciado: un email por ejecución del cron, hasta la hora de corte y sin superar el tope diario."/>
+                    <button name="action_start_drip" type="object"
+                        string="🚀 Enviar todo de golpe (Amazon SES)"
+                        invisible="drip_enabled or state == 'closed' or esp_provider_name != 'aws_ses'"
+                        class="btn-primary"
+                        confirm="Se enviarán todos los correos pendientes de hoy en bloque (de un solo golpe) utilizando Amazon SES. ¿Empezamos?"
+                        title="Envío rápido en bloque: envía todos los correos del margen diario en una única ejecución."/>
+                    <button name="action_stop_drip" type="object"
+                        string="⏸ Detener envío"
+                        invisible="not drip_enabled"
+                        class="btn-warning"/>
+                    <button name="action_launch_in_prosp" type="object"
+                        string="💼 Lanzar en Prosp"
+                        invisible="not use_linkedin or state == 'closed'"
+                        class="btn-primary"
+                        confirm="Se enviará el lote de contactos y sus correspondientes mensajes altamente personalizados a Prosp para iniciar la campaña. ¿Continuar?"
+                        title="Envía los contactos y sus copias personalizadas por IA a la campaña correspondiente de Prosp."/>
+                    <button name="action_close" type="object"
+                        string="Cerrar campaña"
+                        invisible="state not in ('active', 'sending', 'approved')"/>
+                    <button name="action_reopen" type="object"
+                        string="↩ Reabrir campaña"
+                        invisible="state != 'closed'"
+                        class="btn-primary"
+                        confirm="La campaña volverá a borrador. Los envíos ya realizados no se tocan. ¿Continuar?"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,template_review,approved,sending,active,closed"/>
+                </header>
+                <sheet>
+                    <field name="esp_provider_name" invisible="1"/>
+                    <field name="email_template_state" invisible="1"/>
+
+                    <!-- Guía: qué falta para poder enviar -->
+                    <div class="alert alert-warning" role="alert"
+                        invisible="not use_email or email_template_id or state == 'closed'">
+                        <strong>Falta la plantilla de email.</strong>
+                        Pulsa <b>«Generar plantilla con IA»</b> arriba, o ve a la pestaña
+                        <b>«Plantillas IA»</b> y elige una en «Plantilla email (IA)».
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                        invisible="not use_linkedin or linkedin_template_id or state == 'closed'">
+                        <strong>Falta la plantilla de LinkedIn.</strong>
+                        Ve a la pestaña <b>«Plantillas IA»</b>, crea una y elígela en «Plantilla LinkedIn (IA)».
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                        invisible="not use_email or not email_template_id or email_template_state == 'approved' or state == 'closed'">
+                        La plantilla de email todavía <b>no está aprobada</b>. Ábrela
+                        (pestaña «Plantillas IA»), revísala y pulsa <b>«Aprobar»</b>.
+                        Luego: «✨ Generar contenido IA (todos)» → «✅ Aprobar todo el
+                        contenido» → enviar.
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                        invisible="not content_gen_enabled">
+                        <i class="fa fa-spinner fa-spin" title="Generando" role="img" aria-label="Generando"/>
+                        <strong> Generando contenido con IA en segundo plano.</strong>
+                        Quedan <field name="content_gen_pending" nolabel="1" readonly="1"/>
+                        lead(s) sin contenido. Refresca la página para ver el avance;
+                        cuando llegue a 0, pulsa «✅ Aprobar todo el contenido».
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                        invisible="not prosp_drip_enabled">
+                        <i class="fa fa-spinner fa-spin" title="Enviando" role="img" aria-label="Enviando"/>
+                        <strong> Lanzamiento en Prosp en proceso (goteo de seguridad activo).</strong>
+                        Odoo está exportando tus contactos a Prosp en lotes automáticos de 15 leads cada 10 minutos para proteger tu cuenta de LinkedIn. Refresca la página para ver el avance.
+                    </div>
+
+                    <!-- Aviso RGPD Robinson desactivado -->
+                    <div class="alert alert-danger" role="alert"
+                        invisible="not robinson_disabled_warning">
+                        <strong>⚠ Consulta a Lista Robinson DESACTIVADA.</strong>
+                        Los envíos a contactos en España sin consentimiento previo pueden incumplir
+                        la normativa vigente (art. 23.4 LOPDGDD). Actívala en
+                        <a href="/odoo/settings#mc_robinson_check_enabled">Ajustes → Marketing Campaigns</a>
+                        en cuanto tengas acceso a la API de Adigital.
+                        Los envíos realizados con esta verificación desactivada quedan registrados
+                        en el log de la campaña.
+                    </div>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_campaign_leads"
+                            icon="fa-users">
+                            <field name="campaign_lead_count" widget="statinfo"
+                                string="Leads en campaña"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_ai_templates"
+                            icon="fa-magic">
+                            <field name="ai_template_count" widget="statinfo"
+                                string="Plantillas IA"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_campaign_leads"
+                            icon="fa-paper-plane"
+                            invisible="stats_sent == 0">
+                            <field name="stats_sent" widget="statinfo" string="Enviados"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_campaign_replies"
+                            icon="fa-envelope">
+                            <field name="stats_replied" widget="statinfo" string="Respuestas"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Nombre de la campaña"/></h1>
+                        <field name="reference" readonly="1"/>
+                    </div>
+
+                    <group>
+                        <group string="Leads">
+                            <label for="stage_source_id"/>
+                            <div class="o_row">
+                                <field name="stage_source_id" class="oe_inline" options="{'no_create': True}"/>
+                                <button name="action_load_leads_from_stage" type="object"
+                                    string="Recargar leads desde etapa"
+                                    class="btn-secondary btn-sm"
+                                    invisible="state != 'draft' or not stage_source_id"
+                                    title="Busca y asocia todos los leads activos en esta etapa a la lista de abajo."/>
+                            </div>
+                            <field name="lead_count" readonly="1"/>
+                            <field name="lead_ids" widget="many2many_tags"/>
+                            <button name="action_generate_campaign_leads" type="object"
+                                string="Sincronizar líneas de campaña"
+                                class="btn-primary btn-sm"
+                                invisible="state != 'draft'"/>
+                        </group>
+                        <group string="Canales de envío">
+                            <field name="channel_ids" widget="many2many_tags"/>
+                            <field name="esp_provider_id"
+                                invisible="not use_email"
+                                required="use_email"/>
+                            <field name="drip_enabled" readonly="1"
+                                invisible="not drip_enabled"/>
+                            <field name="drip_stop_hour" widget="float_time"
+                                invisible="not use_email"/>
+                            <field name="drip_max_per_day"
+                                invisible="not use_email"/>
+                            <field name="whatsapp_authorized"
+                                invisible="not use_whatsapp"
+                                widget="boolean_toggle"/>
+                            <field name="use_linkedin" invisible="1"/>
+                            <div class="o_row" invisible="not use_linkedin" colspan="2" style="width: 100%; margin-bottom: 8px;">
+                                <button name="action_sync_prosp_campaigns" type="object"
+                                        string="🔄 Sincronizar Opciones de Prosp"
+                                        class="btn-secondary btn-sm me-2"/>
+                                <span class="text-muted small me-2">Campaña:</span>
+                                <field name="prosp_campaign_helper_id" 
+                                       placeholder="Selecciona campaña"
+                                       options="{'no_create': True, 'no_edit': True}"
+                                       class="oe_inline" style="width: 180px; margin-right: 10px;"/>
+                                <span class="text-muted small me-2">Lista:</span>
+                                <field name="prosp_list_helper_id" 
+                                       placeholder="Selecciona lista"
+                                       options="{'no_create': True, 'no_edit': True}"
+                                       class="oe_inline" style="width: 180px;"/>
+                            </div>
+                            <field name="prosp_campaign_id"
+                                invisible="not use_linkedin"
+                                placeholder="ID de Campaña de Prosp"/>
+                            <field name="prosp_list_id"
+                                invisible="not use_linkedin"
+                                placeholder="ID de Lista de Prosp"/>
+                            <div colspan="2" class="text-muted small"
+                                invisible="not use_whatsapp">
+                                El <strong>email tiene prioridad siempre</strong>: si un lead tiene
+                                email y móvil, se le escribe por email. WhatsApp solo se usa para
+                                quien <em>no</em> tiene email, y solo si marcas la casilla de arriba.
+                                Sin marcarla, esos leads quedan excluidos en vez de recibir mensaje.
+                            </div>
+                        </group>
+                    </group>
+
+                    <group string="Prueba antes de lanzar">
+                        <field name="test_email" widget="email"
+                            placeholder="tu@email.com"/>
+                        <field name="test_sent_at" readonly="1"
+                            invisible="not test_sent_at"/>
+                        <div colspan="2">
+                            <button name="action_send_test_email" type="object"
+                                string="✉️ Enviar prueba a esta dirección"
+                                class="btn btn-primary btn-sm"/>
+                            <div class="text-muted small mt-1">
+                                Envía el email real por el mismo proveedor ESP y con la misma
+                                plantilla que recibirán los leads. No marca ningún lead como
+                                enviado ni cambia el estado de la campaña.
+                                También tienes el botón <strong>✉️ Enviar prueba</strong> arriba,
+                                en la barra de estado.
+                            </div>
+                        </div>
+                    </group>
+
+                    <group string="Brief de campaña">
+                        <field name="campaign_type"/>
+                        <field name="followup_source_campaign_id"
+                            invisible="campaign_type != 'followup'"
+                            options="{'no_create': True}"/>
+                        <field name="service_id"/>
+                        <field name="purpose" placeholder="¿Qué quieres conseguir con esta campaña?"
+                            colspan="2"/>
+                        <field name="target_audience"
+                            placeholder="Describe el público objetivo: sector, tamaño de empresa, rol del decisor..."
+                            colspan="2"/>
+                    </group>
+
+                    <group string="Mapeo de etapas de respuesta">
+                        <field name="stage_interested_id"/>
+                        <field name="stage_demo_id"/>
+                        <field name="stage_lost_id"/>
+                        <field name="ai_confidence_threshold"/>
+                    </group>
+
+                    <group string="Sincronización Gmail (historial de comunicaciones)">
+                        <field name="gmail_sync_label"
+                            placeholder="(vacío = etiqueta global de Ajustes / todo el buzón)"/>
+                        <div colspan="2">
+                            <button name="action_gmail_resync_leads" type="object"
+                                string="🔄 Re-sincronizar Gmail de los leads"
+                                class="btn-secondary btn-sm"
+                                invisible="campaign_lead_count == 0"
+                                title="Marca los leads de la campaña para que el proceso automático (cada 10 min) los sincronice en la próxima pasada."/>
+                            <span class="text-muted small ms-2">
+                                El historial de cada lead se sincroniza solo cada 10 min;
+                                este botón solo adelanta a los de esta campaña.
+                            </span>
+                        </div>
+                    </group>
+
+                    <notebook>
+                        <page string="Plantillas IA">
+                            <!-- El desplegable solo lista plantillas de ESTA campaña
+                                 (así es el dominio del campo), así que con una sola
+                                 plantilla parece que no se puede cambiar. Se explica
+                                 aquí y se señala el camino. -->
+                            <div class="alert alert-info" role="alert"
+                                 invisible="state not in ('draft', 'template_review', 'approved')">
+                                Estos desplegables solo muestran plantillas <b>de esta
+                                campaña</b>. Para traer una de otra campaña, o una de las
+                                plantillas de email del CRM, usa
+                                <b>«Usar una plantilla existente»</b> en la barra superior:
+                                se copia aquí y podrás elegirla.
+                            </div>
+                            <group>
+                                <group>
+                                    <field name="email_template_id"
+                                         invisible="not use_email"/>
+                                    <field name="whatsapp_template_id"
+                                         invisible="not use_whatsapp"/>
+                                    <field name="linkedin_template_id"
+                                         invisible="not use_linkedin"/>
+                                </group>
+                            </group>
+                            <field name="ai_template_ids">
+                                <list>
+                                    <field name="channel"/>
+                                    <field name="name"/>
+                                    <field name="state"/>
+                                    <field name="reviewed_by"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Estadísticas">
+                            <div class="alert alert-warning" role="alert">
+                                <field name="tracking_aviso" nolabel="1" readonly="1"/>
+                            </div>
+                            <group>
+                                <group string="Envío">
+                                    <field name="stats_sent" readonly="1"/>
+                                    <field name="stats_delivered" readonly="1"/>
+                                    <field name="stats_bounced" readonly="1"/>
+                                    <field name="stats_excluded_rgpd" string="Bajas RGPD/Robinson" readonly="1"/>
+                                    <field name="stats_excluded_no_channel" readonly="1"/>
+                                    <field name="stats_excluded_duplicate" readonly="1"/>
+                                    <field name="stats_excluded_ai_error" readonly="1"/>
+                                </group>
+                                <group string="Interacción">
+                                    <field name="stats_opened" readonly="1"/>
+                                    <field name="stats_clicked" readonly="1"/>
+                                    <field name="stats_replied" readonly="1"/>
+                                    <field name="stats_unsubscribed" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Resultados">
+                                    <field name="stats_interested" readonly="1"/>
+                                    <field name="stats_wants_demo" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Leads seleccionados">
+                            <field name="lead_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="partner_name"/>
+                                    <field name="email_from"/>
+                                    <field name="phone"/>
+                                    <field name="stage_id"/>
+                                    <field name="user_id"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Notas internas">
+                            <field name="notes" nolabel="1" colspan="2"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_marketing_campaign_list" model="ir.ui.view">
+        <field name="name">marketing.campaign.list</field>
+        <field name="model">marketing.campaign</field>
+        <field name="arch" type="xml">
+            <list string="Campañas de marketing"
+                  decoration-success="state == 'active'"
+                  decoration-warning="state == 'template_review'"
+                  decoration-muted="state == 'closed'">
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="campaign_type"/>
+                <field name="service_id"/>
+                <field name="state"/>
+                <field name="lead_count"/>
+                <field name="stats_sent"/>
+                <field name="stats_opened"/>
+                <field name="stats_replied"/>
+                <field name="stats_interested"/>
+                <field name="stats_wants_demo"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_marketing_campaign_kanban" model="ir.ui.view">
+        <field name="name">marketing.campaign.kanban</field>
+        <field name="model">marketing.campaign</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="service_id"/>
+                <field name="lead_count"/>
+                <field name="stats_sent"/>
+                <field name="stats_opened"/>
+                <field name="stats_interested"/>
+                <field name="campaign_lead_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_title">
+                                <strong><field name="name"/></strong>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <span class="text-muted">
+                                    <field name="service_id"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span class="badge bg-secondary">
+                                        <field name="lead_count"/> leads
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <span t-if="record.stats_sent.value">
+                                        📧 <field name="stats_sent"/> enviados
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_marketing_campaign_search" model="ir.ui.view">
+        <field name="name">marketing.campaign.search</field>
+        <field name="model">marketing.campaign</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="service_id"/>
+                <field name="reference"/>
+                <separator/>
+                <filter string="Campañas de captación" name="type_outreach"
+                    domain="[('campaign_type','=','outreach')]"/>
+                <filter string="Seguimientos" name="type_followup"
+                    domain="[('campaign_type','=','followup')]"/>
+                <separator/>
+                <filter string="En revisión de plantilla" name="template_review"
+                    domain="[('state','=','template_review')]"/>
+                <filter string="Aprobadas / Enviando" name="active_campaigns"
+                    domain="[('state','in',('approved','sending','active'))]"/>
+                <filter string="Cerradas" name="closed"
+                    domain="[('state','=','closed')]"/>
+                <separator/>
+                <filter string="Con seguimientos pendientes" name="follow_ups"
+                    domain="[('campaign_lead_ids.follow_up_state','=','pending')]"/>
+                <group>
+                    <filter string="Tipo" name="by_type" context="{'group_by': 'campaign_type'}"/>
+                    <filter string="Estado" name="by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Servicio" name="by_service" context="{'group_by': 'service_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_marketing_campaign" model="ir.actions.act_window">
+        <field name="name">Campañas</field>
+        <field name="res_model">marketing.campaign</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primera campaña de marketing
+            </p>
+            <p>
+                Selecciona leads del CRM, genera contenido personalizado con IA
+                y envíalo respetando el RGPD.
+            </p>
+        </field>
+    </record>
+</odoo>

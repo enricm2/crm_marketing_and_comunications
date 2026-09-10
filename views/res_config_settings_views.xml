@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_res_config_settings_crm_comunications" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.crm.comunications</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="10"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Vantis CRM + Marketing" name="crm_marketing_and_comunications" data-string="Vantis CRM + Marketing">
+                    
+                    <!-- ── SECCIÓN 1: IDENTIDAD DE MARCA / BRANDING ── -->
+                    <block title="Identidad Corporativa" string="Identidad Corporativa" name="block_branding">
+                        <div class="text-muted mb16">
+                            Configura la identidad de marca de tu empresa. Estos datos serán utilizados automáticamente por la Inteligencia Artificial al redactar correos, mensajes de WhatsApp y pies de página comerciales.
+                        </div>
+                        <div class="row mt16">
+                            <label for="crm_marketing_company_name" class="col-lg-3 o_light_label"/>
+                            <field name="crm_marketing_company_name" class="col-lg-5"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_marketing_company_email" class="col-lg-3 o_light_label"/>
+                            <field name="crm_marketing_company_email" class="col-lg-5"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_marketing_company_phone" class="col-lg-3 o_light_label"/>
+                            <field name="crm_marketing_company_phone" class="col-lg-5" placeholder="e.g. +34 964 50 50 95"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_marketing_privacy_url" class="col-lg-3 o_light_label"/>
+                            <field name="crm_marketing_privacy_url" class="col-lg-5" placeholder="e.g. https://miempresa.com/privacidad"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_marketing_logo_text" class="col-lg-3 o_light_label"/>
+                            <field name="crm_marketing_logo_text" class="col-lg-5"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_marketing_license_key" class="col-lg-3 o_light_label"/>
+                            <field name="crm_marketing_license_key" class="col-lg-5" placeholder="e.g. VANTIS-XXXX-XXXX-XXXX"/>
+                        </div>
+                    </block>
+
+                    <!-- ── SECCIÓN 2: AJUSTES DE GMAIL ── -->
+                    <block title="Sincronización Gmail" string="Sincronización Gmail" name="block_gmail">
+                        <div class="alert alert-info mt16" role="alert">
+                            <i class="fa fa-info-circle me-2"/>
+                            <strong>Sincronización Multiusuario Activa:</strong> La configuración IMAP de Gmail (servidor, usuario, contraseña de aplicación y carpetas) se realiza ahora de manera individual para cada usuario desde su perfil (<strong>Mi Perfil</strong> o Ajustes de Usuario). La sincronización automática utilizará los datos del comercial asignado a cada lead.
+                        </div>
+                        <div class="row mt16">
+                            <label for="crm_gmail_sync_batch" class="col-lg-3 o_light_label"/>
+                            <field name="crm_gmail_sync_batch" class="col-lg-2"/>
+                        </div>
+                    </block>
+
+                    <!-- ── SECCIÓN 3: INTELIGENCIA ARTIFICIAL ── -->
+                    <block title="Inteligencia Artificial" string="Inteligencia Artificial" name="block_ai">
+                        <div class="text-muted">
+                            Claves de API y proveedor preferido para el enriquecimiento y redacción de campañas de marketing.
+                        </div>
+                        <div class="row mt16">
+                            <label for="crm_ai_preferred" class="col-lg-3 o_light_label"/>
+                            <field name="crm_ai_preferred" class="col-lg-4"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_ai_anthropic_key" class="col-lg-3 o_light_label"/>
+                            <field name="crm_ai_anthropic_key" password="True" class="col-lg-5"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_ai_gemini_key" class="col-lg-3 o_light_label"/>
+                            <field name="crm_ai_gemini_key" password="True" class="col-lg-5"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_ai_openai_key" class="col-lg-3 o_light_label"/>
+                            <field name="crm_ai_openai_key" password="True" class="col-lg-5"/>
+                        </div>
+                        <div class="row mt16">
+                            <label for="mc_ai_confidence_threshold" class="col-lg-3 o_light_label"/>
+                            <field name="mc_ai_confidence_threshold" class="col-lg-2"/>
+                        </div>
+                    </block>
+
+                    <!-- ── SECCIÓN 4: MI EMPRESA (ENRIQUECIMIENTO) ── -->
+                    <block title="Contexto de mi Empresa (Enriquecimiento)" string="Contexto de mi Empresa (Enriquecimiento)" name="block_company_enrich">
+                        <div class="text-muted mb16">
+                            Define el contexto comercial detallado de tu empresa para que la IA entienda tus pains, público objetivo y soluciones al redactar y enriquecer leads.
+                        </div>
+                        <div class="row mt16">
+                            <label for="crm_my_company_description" class="col-lg-3 o_light_label"/>
+                            <field name="crm_my_company_description" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_my_company_target_audience" class="col-lg-3 o_light_label"/>
+                            <field name="crm_my_company_target_audience" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_my_company_pain_points" class="col-lg-3 o_light_label"/>
+                            <field name="crm_my_company_pain_points" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_my_company_url_1" class="col-lg-3 o_light_label"/>
+                            <field name="crm_my_company_url_1" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_my_company_url_2" class="col-lg-3 o_light_label"/>
+                            <field name="crm_my_company_url_2" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="crm_my_company_url_3" class="col-lg-3 o_light_label"/>
+                            <field name="crm_my_company_url_3" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt16">
+                            <div class="col-lg-12">
+                                <button name="action_analyze_my_company_urls" type="object" string="Auto-completar con IA desde las webs" class="btn btn-primary fa fa-magic"/>
+                            </div>
+                        </div>
+                    </block>
+
+                    <!-- ── SECCIÓN 5: LISTA ROBINSON ── -->
+                    <block title="Lista Robinson" string="Lista Robinson" name="block_robinson">
+                        <div class="text-muted">
+                            Ajustes para la consulta en la Lista Robinson para cumplir con la normativa publicitaria española.
+                        </div>
+                        <div class="row mt16">
+                            <field name="mc_robinson_check_enabled" class="col-lg-1"/>
+                            <label for="mc_robinson_check_enabled" class="col-lg-11 o_light_label"/>
+                        </div>
+                        <div class="row mt4" invisible="not mc_robinson_check_enabled">
+                            <label for="mc_robinson_api_key" class="col-lg-3 o_light_label"/>
+                            <field name="mc_robinson_api_key" class="col-lg-5" password="True"/>
+                        </div>
+                        <div class="row mt4" invisible="not mc_robinson_check_enabled">
+                            <label for="mc_robinson_api_secret" class="col-lg-3 o_light_label"/>
+                            <field name="mc_robinson_api_secret" class="col-lg-5" password="True"/>
+                        </div>
+                        <div class="row mt4" invisible="not mc_robinson_check_enabled">
+                            <label for="mc_robinson_cache_days" class="col-lg-3 o_light_label"/>
+                            <field name="mc_robinson_cache_days" class="col-lg-2"/>
+                        </div>
+                    </block>
+
+                    <!-- ── SECCIÓN 6: BAJAS / RECHAZOS ── -->
+                    <block title="Mensajes de Baja / Exclusión" string="Mensajes de Baja / Exclusión" name="block_bajas">
+                        <div class="row mt16">
+                            <label for="mc_unsubscribe_reply_email" class="col-lg-3 o_light_label"/>
+                            <field name="mc_unsubscribe_reply_email" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_unsubscribe_reply_whatsapp" class="col-lg-3 o_light_label"/>
+                            <field name="mc_unsubscribe_reply_whatsapp" class="col-lg-8"/>
+                        </div>
+                    </block>
+
+                    <!-- ── SECCIÓN 7: LINKEDIN GROWTH (N8N) ── -->
+                    <block title="LinkedIn Growth (Integración n8n)" string="LinkedIn Growth (Integración n8n)" name="block_linkedin_growth">
+                        <div class="row mt16">
+                            <label for="mc_linkedin_n8n_base_url" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_n8n_base_url" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_webhook_call_prep" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_webhook_call_prep" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_webhook_router" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_webhook_router" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_webhook_hot_signal" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_webhook_hot_signal" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_webhook_ping" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_webhook_ping" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_webhook_prosp_launch" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_webhook_prosp_launch" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <field name="mc_linkedin_router_cron_active" class="col-lg-1"/>
+                            <label for="mc_linkedin_router_cron_active" class="col-lg-11 o_light_label"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_odoo_base_url" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_odoo_base_url" class="col-lg-8"/>
+                        </div>
+                        <div class="row mt4">
+                            <label for="mc_linkedin_api_base" class="col-lg-3 o_light_label"/>
+                            <field name="mc_linkedin_api_base" class="col-lg-8" readonly="1"/>
+                        </div>
+                        <div class="row mt16">
+                            <div class="col-lg-12">
+                                <button name="action_open_linkedin_profiles" type="object" string="Gestionar Perfiles de LinkedIn" class="btn btn-secondary fa fa-linkedin"/>
+                            </div>
+                        </div>
+                    </block>
+
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_crm_gmail_settings" model="ir.actions.act_window">
+        <field name="name">Sincronización Gmail</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'crm_marketing_and_comunications'}</field>
+    </record>
+</odoo>

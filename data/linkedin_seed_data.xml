@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Perfil de ejemplo, listo para probar.
+
+             Está aquí y no en el código a propósito: el rol, el contexto y el
+             ICP son datos de negocio de un usuario concreto, no lógica del
+             módulo. En una base donde el login no exista, la función no hace
+             nada y el módulo se instala igual — que es lo que debe pasar
+             cuando esto se despliegue en casa de un cliente.
+
+             Se puede editar o archivar sin miedo: la función comprueba si ya
+             existe un perfil con ese nombre para ese usuario y, si lo hay, no
+             toca nada. Por eso este bloque NO lleva noupdate: Odoo se salta
+             las <function> de los bloques noupdate en las actualizaciones, y
+             entonces el perfil nunca llegaría a crearse en una base donde el
+             módulo ya estaba instalado. -->
+
+        <function model="marketing.linkedin.profile" name="_create_seed_profile">
+            <value eval="{
+                'login': 'enric@uniasser.com',
+                'name': 'Enric — Uniasser',
+                'role_description':
+                    'Consultor B2B y fundador de Uniasser Consulting S.L. (Vila-real, '
+                    'Castellón). Hablo de tú a tú con founders y CEOs de PYMEs '
+                    'innovadoras sobre cómo dejar de perder tiempo y dinero en '
+                    'procesos que deberían estar automatizados. No vendo software: '
+                    'vendo criterio sobre qué automatizar y en qué orden.',
+                'business_context':
+                    'Uniasser Consulting S.L. es una consultora B2B para founders y '
+                    'CEOs de PYMEs innovadoras. Trabajamos sobre Odoo 19 CE, n8n e '
+                    'integraciones a medida: CRM, tesorería, facturación, WhatsApp '
+                    'Business y automatización de procesos internos. Marca comercial '
+                    'del producto de WhatsApp: Vantis (wa-manager). Mercado principal: '
+                    'Comunidad Valenciana y resto de España, empresas de 10 a 150 '
+                    'empleados que ya tienen volumen pero siguen tirando de Excel y '
+                    'de trabajo manual. Propuesta de valor: menos herramientas '
+                    'sueltas, más procesos que se ejecutan solos y se miden.',
+                'icp_description':
+                    'Founder, CEO o director general de una PYME española de 10 a 150 '
+                    'empleados, con procesos comerciales o administrativos aún '
+                    'manuales, que ya ha intentado resolverlo con herramientas sueltas '
+                    'y busca a alguien que ordene el conjunto. Sectores donde mejor '
+                    'encajamos: industrial, cerámica, logística, distribución, '
+                    'servicios profesionales y agencias.',
+                'icp_sector_keywords':
+                    'industrial, cerámica, ceramica, azulejo, logística, logistica, '
+                    'transporte, distribución, distribucion, fabricación, fabricacion, '
+                    'ingeniería, ingenieria, consultora, agencia, asesoría, asesoria, '
+                    'inmobiliaria, instalaciones, mantenimiento',
+                'icp_role_keywords':
+                    'ceo, founder, fundador, cofounder, director general, gerente, '
+                    'dirección general, propietario, socio director, coo, '
+                    'director de operaciones, director financiero, cfo',
+                'icp_exclude_keywords':
+                    'estudiante, becario, recruiter, headhunter, freelance en busca, '
+                    'buscando empleo, open to work, community manager junior',
+                'tone_guidelines':
+                    'Profesional, cercano y directo. Sin jerga técnica innecesaria y '
+                    'sin lenguaje de agencia. Frases cortas. Cada afirmación apoyada '
+                    'en un dato concreto del lead o de las métricas. Nada de '
+                    'felicitaciones ni de relleno motivacional: si algo va mal, se '
+                    'dice con el número delante.',
+                'ai_mode': 'odoo',
+                'hot_threshold': 4,
+                'score_comment': 2,
+                'score_reaction': 1,
+                'score_share': 2,
+                'score_mention': 3,
+                'score_profile_view': 1,
+                'score_connection': 2,
+                'score_follow': 1,
+                'score_message': 3,
+                'score_icp_bonus': 2,
+                'auto_create_lead': True,
+                'auto_qualify': True,
+                'auto_schedule_call': True,
+                'notify_whatsapp': False,
+                'router_period_days': 30,
+                'router_min_engagement_rate': 3.0,
+                'router_min_leads': 8,
+                'router_min_signals': 20,
+                'router_min_signal_to_lead': 25.0,
+                'router_stage_stuck_days': 21,
+                'router_cron_enabled': True,
+                'drive_folder': '/Minero-LinkedIn/inbox/',
+            }"/>
+        </function>
+
+    </data>
+</odoo>

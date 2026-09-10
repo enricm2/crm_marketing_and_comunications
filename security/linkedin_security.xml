@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Aislamiento multiusuario.
+
+             Cada usuario ve sus propios perfiles de LinkedIn y lo que cuelga
+             de ellos: señales, publicaciones, lotes y diagnósticos. Sin estas
+             reglas, en una base con varios comerciales —o en el despliegue de
+             un cliente— cualquiera vería el contenido y las señales de los
+             demás, que es exactamente lo que este flujo no debe permitir.
+
+             El grupo "Responsable" ve todo: alguien tiene que poder auditar. -->
+
+        <record id="rule_linkedin_profile_own" model="ir.rule">
+            <field name="name">Perfil LinkedIn: solo los propios</field>
+            <field name="model_id" ref="model_marketing_linkedin_profile"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+        </record>
+
+        <record id="rule_linkedin_profile_manager" model="ir.rule">
+            <field name="name">Perfil LinkedIn: responsable ve todos</field>
+            <field name="model_id" ref="model_marketing_linkedin_profile"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_manager'))]"/>
+        </record>
+
+        <record id="rule_linkedin_signal_own" model="ir.rule">
+            <field name="name">Señales LinkedIn: solo las de mis perfiles</field>
+            <field name="model_id" ref="model_marketing_linkedin_signal"/>
+            <field name="domain_force">[('profile_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+        </record>
+
+        <record id="rule_linkedin_signal_manager" model="ir.rule">
+            <field name="name">Señales LinkedIn: responsable ve todas</field>
+            <field name="model_id" ref="model_marketing_linkedin_signal"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_manager'))]"/>
+        </record>
+
+        <record id="rule_linkedin_post_own" model="ir.rule">
+            <field name="name">Publicaciones LinkedIn: solo las de mis perfiles</field>
+            <field name="model_id" ref="model_marketing_linkedin_post"/>
+            <field name="domain_force">[('profile_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+        </record>
+
+        <record id="rule_linkedin_post_manager" model="ir.rule">
+            <field name="name">Publicaciones LinkedIn: responsable ve todas</field>
+            <field name="model_id" ref="model_marketing_linkedin_post"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_manager'))]"/>
+        </record>
+
+        <record id="rule_linkedin_batch_own" model="ir.rule">
+            <field name="name">Lotes LinkedIn: solo los de mis perfiles</field>
+            <field name="model_id" ref="model_marketing_linkedin_batch"/>
+            <field name="domain_force">[('profile_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+        </record>
+
+        <record id="rule_linkedin_batch_manager" model="ir.rule">
+            <field name="name">Lotes LinkedIn: responsable ve todos</field>
+            <field name="model_id" ref="model_marketing_linkedin_batch"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_manager'))]"/>
+        </record>
+
+        <record id="rule_linkedin_diagnostic_own" model="ir.rule">
+            <field name="name">Diagnósticos LinkedIn: solo los de mis perfiles</field>
+            <field name="model_id" ref="model_marketing_linkedin_diagnostic"/>
+            <field name="domain_force">[('profile_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+        </record>
+
+        <record id="rule_linkedin_diagnostic_manager" model="ir.rule">
+            <field name="name">Diagnósticos LinkedIn: responsable ve todos</field>
+            <field name="model_id" ref="model_marketing_linkedin_diagnostic"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_manager'))]"/>
+        </record>
+
+        <record id="rule_linkedin_capture_own" model="ir.rule">
+            <field name="name">Capturas: solo las de mis perfiles</field>
+            <field name="model_id" ref="model_marketing_linkedin_capture"/>
+            <field name="domain_force">[('profile_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+        </record>
+
+        <record id="rule_linkedin_capture_manager" model="ir.rule">
+            <field name="name">Capturas: responsable ve todas</field>
+            <field name="model_id" ref="model_marketing_linkedin_capture"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_marketing_campaigns_manager'))]"/>
+        </record>
+
+        <!-- Multicompañía: un perfil solo es visible desde su compañía. -->
+        <record id="rule_linkedin_profile_company" model="ir.rule">
+            <field name="name">Perfil LinkedIn: multicompañía</field>
+            <field name="model_id" ref="model_marketing_linkedin_profile"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

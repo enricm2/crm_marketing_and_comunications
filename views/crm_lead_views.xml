@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Acción masiva en lista de leads: crear nueva campaña -->
+    <record id="action_leads_create_campaign" model="ir.actions.server">
+        <field name="name">Crear campaña de marketing</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_create_marketing_campaign()</field>
+    </record>
+
+    <!-- Acción masiva en lista de leads: añadir a campaña existente -->
+    <record id="action_leads_add_to_campaign" model="ir.actions.server">
+        <field name="name">Añadir a campaña existente</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_add_to_existing_campaign()</field>
+    </record>
+
+    <!-- Botón smart en el form del lead -->
+    <record id="crm_lead_view_form_marketing" model="ir.ui.view">
+        <field name="name">crm.lead.form.marketing.campaigns</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <!-- Contador de campañas -->
+                <button class="oe_stat_button" type="object"
+                    name="action_view_marketing_campaigns"
+                    icon="fa-bullhorn"
+                    invisible="marketing_campaign_count == 0">
+                    <field name="marketing_campaign_count" widget="statinfo"
+                        string="Campañas"/>
+                </button>
+            </div>
+
+            <!-- Botones de acción en cabecera -->
+            <div name="button_box" position="after">
+                <div class="o_marketing_campaign_actions" style="margin-bottom: 8px;">
+                    <button name="action_create_marketing_campaign" type="object"
+                        string="Nueva campaña"
+                        class="btn btn-secondary btn-sm"
+                        title="Crear una nueva campaña de marketing con este lead"/>
+                    <button name="action_add_to_existing_campaign" type="object"
+                        string="Añadir a campaña"
+                        class="btn btn-secondary btn-sm ms-2"
+                        title="Añadir este lead a una campaña existente"/>
+                </div>
+            </div>
+
+            <!-- Campo de baja de marketing / RGPD -->
+            <xpath expr="//field[@name='email_from']" position="after">
+                <field name="marketing_opt_out" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vista kanban del lead: añadir opción en menú de acción del kanban -->
+    <record id="crm_lead_view_kanban_marketing" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.marketing.campaigns</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='menu']" position="inside">
+                <a role="menuitem" type="object" name="action_create_marketing_campaign"
+                    class="dropdown-item">Nueva campaña</a>
+                <a role="menuitem" type="object" name="action_add_to_existing_campaign"
+                    class="dropdown-item">Añadir a campaña</a>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

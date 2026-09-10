@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Formulario: campos a la izquierda, vista previa en vivo a la derecha -->
+    <record id="view_crm_email_template_form" model="ir.ui.view">
+        <field name="name">crm.email.template.form</field>
+        <field name="model">crm.email.template</field>
+        <field name="arch" type="xml">
+            <form string="Plantilla de email">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivada" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Ej.: Oferta comercial"/></h1>
+                    </div>
+                    <field name="active" invisible="1"/>
+
+                    <group>
+                        <group string="Cabecera">
+                            <field name="logo" widget="image"
+                                   options="{'size': [0, 90]}"/>
+                            <field name="show_banner"/>
+                            <field name="banner_color" widget="color"
+                                   invisible="not show_banner"/>
+                        </group>
+                        <group string="Texto">
+                            <field name="text_color" widget="color"/>
+                            <field name="link_color" widget="color"/>
+                            <field name="sequence" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+
+                    <group string="Contenido">
+                        <field name="heading" placeholder="Hola, {nombre}"/>
+                        <field name="body_text" nolabel="1" colspan="2"
+                               placeholder="Escribe aquí el mensaje. Deja una línea en blanco para separar párrafos. Usa **negrita** y *cursiva* si quieres resaltar algo."/>
+                        <div colspan="2" class="text-muted small">
+                            <b>Marcadores:</b>
+                            <code>{nombre}</code> <code>{empresa}</code> <code>{sector}</code>
+                            <code>{pais}</code> <code>{ciudad}</code> <code>{cargo}</code>
+                            <code>{web}</code> <code>{email}</code> <code>{telefono}</code>
+                            <code>{tamano}</code> <code>{comercial}</code> <code>{oportunidad}</code>.
+                            Se sustituyen por los datos del lead al aplicar la plantilla.
+                            <br/>
+                            <b>Formato:</b> <code>**negrita**</code> y
+                            <code>*cursiva*</code> (o <code>_cursiva_</code>).
+                            Los asteriscos deben pegar al texto: <code>**así**</code>, no
+                            <code>** así **</code>. No hace falta HTML.
+                            <br/>
+                            <b>Bloques de IA:</b> lo que escribas entre
+                            <code>[PROMPT]</code> y <code>[/PROMPT]</code> es una instrucción
+                            para la IA, no texto del email: se sustituye por lo que ella redacte
+                            para cada lead. Puedes usar marcadores dentro
+                            (<code>[PROMPT]un reto típico de {sector}[/PROMPT]</code>).
+                        </div>
+                    </group>
+
+                    <group string="Recuadro destacado">
+                        <field name="show_box"/>
+                        <field name="box_text" invisible="not show_box"
+                               placeholder="Ej.: Oferta válida durante 30 días"/>
+                        <field name="box_color" widget="color" invisible="not show_box"/>
+                        <field name="box_border_color" widget="color" invisible="not show_box"/>
+                    </group>
+
+                    <group string="Pie">
+                        <field name="footer_text" nolabel="1" colspan="2"
+                               placeholder="Ej.: Uniasser · www.uniasser.com · 964 50 50 95"/>
+                        <field name="footer_color" widget="color"/>
+                    </group>
+
+                    <separator string="Vista previa"/>
+                    <group>
+                        <field name="preview_lead_id" options="{'no_create': True}"
+                               placeholder="Se elige solo un lead enriquecido"/>
+                        <field name="preview_ia_info" readonly="1"
+                               invisible="not preview_ia_info"/>
+                        <field name="preview_ia_firma" invisible="1"/>
+                    </group>
+
+                    <div class="alert alert-secondary" role="alert">
+                        <field name="placeholders_ayuda" nolabel="1" readonly="1"/>
+                    </div>
+
+                    <!-- Cuando hay bloques [PROMPT] se enseña el email ya desarrollado
+                         por la IA con un lead real. Se regenera al guardar, solo si ha
+                         cambiado el texto o el lead: cambiar un color no cuesta una
+                         llamada. -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="not preview_ia_html">
+                        Email completo, con un <b>lead real</b> y los bloques
+                        <code>[PROMPT]</code> ya redactados por la IA. Se rehace al guardar
+                        si cambias el texto o el lead de muestra.
+                        <div class="mt-2">
+                            <button name="action_previsualizar_ia" type="object"
+                                    string="Volver a generar" class="btn btn-secondary btn-sm"
+                                    icon="fa-refresh"
+                                    title="Pide a la IA otra redacción para el mismo texto, o prueba con otro lead."/>
+                        </div>
+                    </div>
+                    <field name="preview_ia_html" nolabel="1" readonly="1"
+                           invisible="not preview_ia_html"
+                           options="{'sandboxedPreview': true}"/>
+
+                    <!-- Sin bloques de IA basta la previa barata de siempre. -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="preview_ia_html">
+                        Así se verá el email, con los marcadores sustituidos.
+                        Se actualiza al guardar.
+                    </div>
+                    <field name="preview_html" nolabel="1" readonly="1"
+                           invisible="preview_ia_html"
+                           options="{'sandboxedPreview': true}"/>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_crm_email_template_list" model="ir.ui.view">
+        <field name="name">crm.email.template.list</field>
+        <field name="model">crm.email.template</field>
+        <field name="arch" type="xml">
+            <list string="Plantillas de email">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="heading"/>
+                <field name="show_banner" string="Banner"/>
+                <field name="show_box" string="Recuadro"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_crm_email_template" model="ir.actions.act_window">
+        <field name="name">Plantillas de email</field>
+        <field name="res_model">crm.email.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primera plantilla de email</p>
+            <p>
+                Define una vez el logo, los colores y el recuadro destacado, y
+                reutilízalos en todas las comunicaciones sin tocar HTML.
+            </p>
+        </field>
+    </record>
+
+</odoo>

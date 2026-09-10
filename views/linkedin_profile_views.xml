@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_linkedin_profile_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.profile.form</field>
+        <field name="model">marketing.linkedin.profile</field>
+        <field name="arch" type="xml">
+            <form string="Perfil de LinkedIn">
+                <header>
+                    <button name="action_run_router" type="object"
+                        string="Ejecutar router de embudo"
+                        class="btn-primary"
+                        help="Diagnostica ahora en qué fase está el cuello de botella."/>
+                    <button name="action_test_n8n" type="object"
+                        string="Probar conexión con n8n"
+                        class="btn-secondary"/>
+                    <button name="action_regenerar_leads_por_rol" type="object"
+                        string="Regenerar leads según rol"
+                        class="btn-secondary"
+                        confirm="Se van a recalcular las puntuaciones de todos los leads de este perfil aplicando los cargos, sectores y exclusiones que tienes configurados ahora. Los leads que dejen de encajar perderán puntos y pueden dejar de ser prioritarios. ¿Continuar?"
+                        help="Repuntúa las señales ya capturadas con la configuración actual. No busca leads nuevos en LinkedIn."/>
+                    <button name="action_regenerate_token" type="object"
+                        string="Regenerar token"
+                        class="btn-secondary"
+                        confirm="El token actual dejará de funcionar. Tendrás que actualizarlo en todos los nodos HTTP Request de n8n. ¿Seguir?"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_signals" icon="fa-bolt">
+                            <field name="signal_count" widget="statinfo" string="Señales"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_leads" icon="fa-user-plus">
+                            <field name="lead_count" widget="statinfo" string="Leads"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_posts" icon="fa-linkedin">
+                            <field name="post_count" widget="statinfo" string="Publicaciones"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_diagnostics" icon="fa-stethoscope">
+                            <field name="diagnostic_count" widget="statinfo" string="Diagnósticos"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger"
+                        invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name" string="Perfil"/>
+                        <h1><field name="name" placeholder="Ej: Enric — Uniasser"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id" options="{'no_create': True}"/>
+                            <field name="linkedin_url" widget="url"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="ai_mode"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Rol y contexto" name="context">
+                            <div class="alert alert-info" role="alert">
+                                Este bloque es lo que hace que el sistema sirva a varios
+                                usuarios. Todo lo que escribas aquí se inyecta literalmente
+                                en los prompts del router de embudo y de la preparación de
+                                llamada: nada de esto está fijado en el código.
+                            </div>
+                            <group>
+                                <field name="role_description" placeholder="Quién eres y desde dónde hablas."/>
+                                <field name="business_context" placeholder="Empresa, mercado, servicios, propuesta de valor."/>
+                                <field name="tone_guidelines" placeholder="Cómo debe sonar lo que genere la IA."/>
+                            </group>
+                            <group string="Cliente ideal (ICP)">
+                                <field name="icp_description"/>
+                                <field name="icp_sector_keywords" placeholder="industrial, cerámica, logística"/>
+                                <field name="icp_role_keywords" placeholder="ceo, founder, director general"/>
+                                <field name="icp_exclude_keywords" placeholder="estudiante, becario, recruiter"/>
+                            </group>
+
+                            <group string="Clientes a excluir" colspan="2">
+                                <div colspan="2" class="text-muted small mb-2">
+                                    Empresas que <b>no</b> interesan. Un lead que caiga en una
+                                    categoría activa recibe <b>puntuación 0</b> y no puede marcarse
+                                    como caliente — salvo que en su ficha marques
+                                    <i>«Excepción: no excluir»</i>.
+                                    Las palabras clave se buscan en el nombre de empresa y en el
+                                    cargo, sin distinguir mayúsculas ni acentos.
+                                </div>
+                                <div colspan="2">
+                                    <button name="action_crear_exclusiones_por_defecto"
+                                            type="object"
+                                            string="Añadir categorías habituales"
+                                            class="btn-secondary btn-sm"
+                                            invisible="exclusion_count > 0"
+                                            help="Crea de partida: software e IA, ONG, administración pública, educación y RRHH."/>
+                                </div>
+                                <div colspan="2" class="text-muted small mt-2">
+                                    Los cambios que hagas aquí y en los cargos objetivo solo afectan a
+                                    las señales <b>nuevas</b>. Para aplicarlos a los leads que ya tienes,
+                                    pulsa <b>«Regenerar leads según rol»</b> arriba.
+                                </div>
+                                <field name="exclusion_count" invisible="1"/>
+                                <!-- active_test=False: sin esto, al desactivar una
+                                     categoría desaparecería de la lista y no habría
+                                     forma de volver a activarla desde la interfaz. -->
+                                <field name="exclusion_ids" nolabel="1" colspan="2"
+                                       context="{'active_test': False}">
+                                    <list editable="bottom"
+                                          decoration-muted="not active">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name" placeholder="Desarrollo de software e IA"/>
+                                        <field name="keywords" placeholder="software, saas, inteligencia artificial"/>
+                                        <field name="note" placeholder="Por qué se excluye" optional="show"/>
+                                        <field name="active" widget="boolean_toggle"/>
+                                        <field name="lead_count" string="Leads" readonly="1"/>
+                                        <button name="action_view_leads" type="object"
+                                                icon="fa-users" title="Ver los leads excluidos por esta categoría"
+                                                invisible="lead_count == 0"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+
+                        <page string="Puntuación de señales" name="scoring">
+                            <div class="alert alert-info" role="alert">
+                                Marca los tipos de interacción que quieres seguir y cuánto
+                                vale cada uno. Los tipos <b>desmarcados se ignoran al
+                                entrar</b>: no crean señal, ni lead, ni puntúan (quedan
+                                contados aparte en el lote de importación).
+                                Cuando la puntuación acumulada de un lead alcanza el umbral,
+                                la señal se considera caliente: se avisa, y si están activos
+                                los automatismos se cualifica el lead y se planifica la
+                                llamada.
+                            </div>
+                            <table class="table table-sm o_linkedin_signal_types">
+                                <thead>
+                                    <tr>
+                                        <th style="width:12%">Seguir</th>
+                                        <th style="width:58%">Tipo de interacción</th>
+                                        <th style="width:30%">Puntos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><field name="track_comment" nolabel="1"/></td>
+                                        <td>Comentario en una publicación mía</td>
+                                        <td><field name="score_comment" nolabel="1"
+                                            readonly="not track_comment"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_reaction" nolabel="1"/></td>
+                                        <td>Reacción / me gusta</td>
+                                        <td><field name="score_reaction" nolabel="1"
+                                            readonly="not track_reaction"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_share" nolabel="1"/></td>
+                                        <td>Ha compartido una publicación mía</td>
+                                        <td><field name="score_share" nolabel="1"
+                                            readonly="not track_share"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_mention" nolabel="1"/></td>
+                                        <td>Me ha mencionado</td>
+                                        <td><field name="score_mention" nolabel="1"
+                                            readonly="not track_mention"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_profile_view" nolabel="1"/></td>
+                                        <td>Ha visitado mi perfil</td>
+                                        <td><field name="score_profile_view" nolabel="1"
+                                            readonly="not track_profile_view"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_connection" nolabel="1"/></td>
+                                        <td>Me ha añadido como conexión</td>
+                                        <td><field name="score_connection" nolabel="1"
+                                            readonly="not track_connection"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_follow" nolabel="1"/></td>
+                                        <td>Ha empezado a seguirme</td>
+                                        <td><field name="score_follow" nolabel="1"
+                                            readonly="not track_follow"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><field name="track_message" nolabel="1"/></td>
+                                        <td>Mensaje directo / InMail</td>
+                                        <td><field name="score_message" nolabel="1"
+                                            readonly="not track_message"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <group>
+                                <group string="Umbral y bonus">
+                                    <field name="score_icp_bonus"/>
+                                    <field name="hot_threshold"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Automatismos del CRM" name="automation">
+                            <group>
+                                <group string="Creación de leads">
+                                    <field name="auto_create_lead"/>
+                                    <field name="team_id"/>
+                                    <field name="salesperson_id"/>
+                                    <field name="stage_new_id"/>
+                                </group>
+                                <group string="Al superar el umbral">
+                                    <field name="auto_qualify"/>
+                                    <field name="stage_qualified_id"
+                                        invisible="not auto_qualify"
+                                        required="auto_qualify"/>
+                                    <field name="auto_schedule_call"/>
+                                    <field name="notify_whatsapp"/>
+                                    <field name="notify_phone"
+                                        invisible="not notify_whatsapp"
+                                        required="notify_whatsapp"
+                                        placeholder="+34600000000"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Router de embudo" name="router">
+                            <div class="alert alert-info" role="alert">
+                                Umbrales con los que el router decide si el cuello de botella
+                                está en posicionamiento, captación o conversión. Ajústalos a
+                                tu realidad: no hay números universales.
+                            </div>
+                            <group>
+                                <group string="Periodo y ejecución">
+                                    <field name="router_period_days"/>
+                                    <field name="router_cron_enabled"/>
+                                    <field name="router_stage_stuck_days"/>
+                                </group>
+                                <group string="Objetivos del periodo">
+                                    <field name="router_min_engagement_rate"/>
+                                    <field name="router_min_signals"/>
+                                    <field name="router_min_leads"/>
+                                    <field name="router_min_signal_to_lead"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Integración API (n8n/Prosp)" name="n8n">
+                            <group>
+                                <group string="Credenciales Prosp">
+                                    <field name="prosp_api_key" password="True" placeholder="Copia tu API Key desde Prosp"/>
+                                </group>
+                                <group string="Conexión n8n">
+                                    <field name="n8n_base_url"
+                                        placeholder="Vacío = usar la URL global de Ajustes"/>
+                                    <field name="drive_folder"/>
+                                    <!-- Ni password ni oculto: este token hay que
+                                         copiarlo a mano en los nodos de n8n. -->
+                                    <field name="webhook_token" readonly="1"
+                                        widget="CopyClipboardChar"/>
+                                </group>
+                            </group>
+                            <field name="integration_guide" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_linkedin_profile_list" model="ir.ui.view">
+        <field name="name">marketing.linkedin.profile.list</field>
+        <field name="model">marketing.linkedin.profile</field>
+        <field name="arch" type="xml">
+            <list string="Perfiles de LinkedIn">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="ai_mode"/>
+                <field name="hot_threshold"/>
+                <field name="signal_count"/>
+                <field name="lead_count"/>
+                <field name="post_count"/>
+                <field name="router_cron_enabled" widget="boolean_toggle"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_linkedin_profile" model="ir.actions.act_window">
+        <field name="name">Perfiles de LinkedIn</field>
+        <field name="res_model">marketing.linkedin.profile</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu perfil de LinkedIn
+            </p>
+            <p>
+                El perfil guarda tu rol, tu contexto de negocio y tu cliente ideal.
+                Es lo que permite que cada usuario tenga su propio criterio sin
+                tocar el código, y lo que identifica a tu flujo de n8n cuando
+                manda señales a Odoo.
+            </p>
+        </field>
+    </record>
+
+</odoo>

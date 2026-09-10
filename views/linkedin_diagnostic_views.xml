@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_linkedin_diagnostic_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.diagnostic.form</field>
+        <field name="model">marketing.linkedin.diagnostic</field>
+        <field name="arch" type="xml">
+            <form string="Diagnóstico del embudo">
+                <header>
+                    <button name="action_rerun" type="object"
+                        string="Volver a ejecutar" class="btn-primary"/>
+                    <button name="action_notify" type="object"
+                        string="Enviarme el informe" class="btn-secondary"
+                        invisible="not report"/>
+                    <button name="action_open_bottleneck_leads" type="object"
+                        string="Ver leads parados" class="btn-secondary"
+                        invisible="not bottleneck_stage_id"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="diagnosis" string="Diagnóstico"/>
+                        <h1><field name="diagnosis" readonly="1"/></h1>
+                        <h3 invisible="not next_action">
+                            Siguiente paso: <field name="next_action" readonly="1" class="oe_inline"/>
+                        </h3>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'failed'">
+                        <strong>El diagnóstico falló:</strong>
+                        <field name="error_message" nolabel="1" readonly="1" class="oe_inline"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="profile_id"/>
+                            <field name="run_date"/>
+                            <field name="period_days"/>
+                            <field name="trigger"/>
+                        </group>
+                        <group>
+                            <field name="bottleneck_stage_id"/>
+                            <field name="generated_by"/>
+                            <field name="notified"/>
+                        </group>
+                    </group>
+
+                    <group string="Informe">
+                        <field name="report" nolabel="1" colspan="2" readonly="1"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Métricas" name="metrics">
+                            <group>
+                                <group string="Contenido">
+                                    <field name="posts_count"/>
+                                    <field name="impressions"/>
+                                    <field name="avg_engagement_rate"/>
+                                    <field name="signals_count"/>
+                                    <field name="hot_signals_count"/>
+                                    <field name="signal_to_lead_rate"/>
+                                </group>
+                                <group string="Pipeline">
+                                    <field name="leads_created"/>
+                                    <field name="leads_from_linkedin"/>
+                                    <field name="open_leads"/>
+                                    <field name="won_count"/>
+                                    <field name="lost_count"/>
+                                    <field name="win_rate"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Datos completos" name="raw" groups="base.group_no_one">
+                            <field name="metrics_json" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_linkedin_diagnostic_list" model="ir.ui.view">
+        <field name="name">marketing.linkedin.diagnostic.list</field>
+        <field name="model">marketing.linkedin.diagnostic</field>
+        <field name="arch" type="xml">
+            <list string="Diagnósticos del embudo"
+                  decoration-danger="diagnosis == 'positioning'"
+                  decoration-warning="diagnosis in ('capture', 'conversion')"
+                  decoration-success="diagnosis == 'healthy'"
+                  decoration-muted="state == 'failed'">
+                <field name="run_date"/>
+                <field name="profile_id"/>
+                <field name="diagnosis"/>
+                <field name="bottleneck_stage_id" optional="show"/>
+                <field name="next_action"/>
+                <field name="avg_engagement_rate" optional="show"/>
+                <field name="signals_count" optional="show"/>
+                <field name="leads_created" optional="show"/>
+                <field name="win_rate" optional="hide"/>
+                <field name="period_days" optional="hide"/>
+                <field name="trigger" optional="hide"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_linkedin_diagnostic" model="ir.actions.act_window">
+        <field name="name">Diagnósticos del embudo</field>
+        <field name="res_model">marketing.linkedin.diagnostic</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Ejecuta el router de embudo
+            </p>
+            <p>
+                El router cruza el rendimiento de tu contenido con el estado de tu
+                pipeline y dice en qué fase está el cuello de botella:
+                posicionamiento, captación o conversión. Se lanza desde la ficha
+                del perfil, desde el cron semanal o desde n8n.
+            </p>
+        </field>
+    </record>
+
+</odoo>

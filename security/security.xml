@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_marketing_campaigns_user" model="res.groups">
+        <field name="name">Marketing Campaigns / Usuario</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="group_marketing_campaigns_manager" model="res.groups">
+        <field name="name">Marketing Campaigns / Responsable</field>
+        <field name="implied_ids" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+    </record>
+
+    <!-- Todos los usuarios internos reciben acceso básico de campaña por defecto -->
+    <record id="base.group_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_marketing_campaigns_user'))]"/>
+    </record>
+</odoo>

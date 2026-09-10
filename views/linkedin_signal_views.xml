@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_linkedin_signal_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.signal.form</field>
+        <field name="model">marketing.linkedin.signal</field>
+        <field name="arch" type="xml">
+            <form string="Señal de LinkedIn">
+                <header>
+                    <button name="action_process" type="object"
+                        string="Procesar" class="btn-primary"
+                        invisible="state in ('linked', 'created', 'discarded')"
+                        help="Vuelve a intentar cruzar la señal con el CRM."/>
+                    <button name="action_open_lead" type="object"
+                        string="Abrir lead" class="btn-secondary"
+                        invisible="not lead_id"/>
+                    <button name="action_open_linkedin" type="object"
+                        string="Ver en LinkedIn" class="btn-secondary"
+                        invisible="not linkedin_url"/>
+                    <button name="action_discard" type="object"
+                        string="Descartar" class="btn-secondary"
+                        invisible="state == 'discarded'"
+                        confirm="La señal dejará de contar en las métricas y en el router. ¿Seguir?"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="new,linked,created"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Caliente" bg_color="text-bg-danger"
+                        invisible="not is_hot"/>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Contacto">
+                            <field name="contact_name"/>
+                            <field name="company_name"/>
+                            <field name="job_title"/>
+                            <field name="linkedin_url" widget="url"/>
+                            <field name="location"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                        </group>
+                        <group string="Señal">
+                            <field name="profile_id"/>
+                            <field name="signal_type"/>
+                            <field name="signal_date"/>
+                            <field name="post_id"/>
+                            <field name="external_post_ref"
+                                invisible="post_id or not external_post_ref"/>
+                            <field name="score"/>
+                            <field name="icp_fit"/>
+                            <field name="is_hot"/>
+                            <field name="lead_enrichment_ok" widget="boolean_toggle"
+                                   readonly="1" invisible="not lead_id"/>
+                        </group>
+                    </group>
+                    <group string="Qué escribió" invisible="not comment_text">
+                        <field name="comment_text" nolabel="1" colspan="2"/>
+                    </group>
+                    <group>
+                        <group string="CRM">
+                            <field name="lead_id"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group string="Trazabilidad">
+                            <field name="batch_id"/>
+                            <field name="processing_error" invisible="not processing_error"/>
+                            <field name="dedupe_hash" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    <group string="Payload original" groups="base.group_no_one">
+                        <field name="raw_payload" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_linkedin_signal_list" model="ir.ui.view">
+        <field name="name">marketing.linkedin.signal.list</field>
+        <field name="model">marketing.linkedin.signal</field>
+        <field name="arch" type="xml">
+            <list string="Señales de LinkedIn" multi_edit="1"
+                  decoration-danger="is_hot"
+                  decoration-muted="state == 'discarded'"
+                  decoration-warning="state == 'pending'">
+                <field name="signal_date"/>
+                <field name="contact_name"/>
+                <field name="company_name"/>
+                <field name="job_title" optional="show"/>
+                <field name="signal_type"/>
+                <field name="post_id" optional="show" readonly="0"/>
+                <field name="score" sum="Puntos"/>
+                <field name="icp_fit" optional="show" widget="boolean_toggle" readonly="1"/>
+                <field name="is_hot" optional="show"/>
+                <field name="lead_id" optional="show"/>
+                <field name="lead_enrichment_ok" string="Enriq." optional="show"
+                       widget="boolean_toggle" readonly="1"/>
+                <field name="lead_enrichment_state" string="Estado enriq." optional="hide"/>
+                <field name="state"/>
+                <field name="profile_id" optional="hide"/>
+                <field name="batch_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_linkedin_signal_search" model="ir.ui.view">
+        <field name="name">marketing.linkedin.signal.search</field>
+        <field name="model">marketing.linkedin.signal</field>
+        <field name="arch" type="xml">
+            <search string="Señales de LinkedIn">
+                <field name="contact_name"/>
+                <field name="company_name"/>
+                <field name="linkedin_url"/>
+                <field name="post_id"/>
+                <field name="lead_id"/>
+                <!-- Filtros por tipo. Sin separador entre ellos: Odoo los une con
+                     OR, así que marcar varios muestra todos a la vez, que es
+                     justo lo que se quiere para "quién me ha buscado esta semana". -->
+                <filter name="type_comment" string="Comentarios"
+                    domain="[('signal_type', '=', 'comment')]"/>
+                <filter name="type_reaction" string="Reacciones"
+                    domain="[('signal_type', '=', 'reaction')]"/>
+                <filter name="type_share" string="Compartidos"
+                    domain="[('signal_type', '=', 'share')]"/>
+                <filter name="type_mention" string="Menciones"
+                    domain="[('signal_type', '=', 'mention')]"/>
+                <filter name="type_profile_view" string="Vistas de perfil"
+                    domain="[('signal_type', '=', 'profile_view')]"/>
+                <filter name="type_connection" string="Nuevas conexiones"
+                    domain="[('signal_type', '=', 'connection')]"/>
+                <filter name="type_follow" string="Nuevos seguidores"
+                    domain="[('signal_type', '=', 'follow')]"/>
+                <filter name="type_message" string="Mensajes directos"
+                    domain="[('signal_type', '=', 'message')]"/>
+                <separator/>
+                <!-- Atajo para "todo el que ha venido a por mí", que es distinto
+                     de "todo el que ha pasado por un post": son las señales que
+                     el contacto dirige a la persona, no al contenido. -->
+                <filter name="type_inbound" string="Han venido a mi perfil"
+                    domain="[('signal_type', 'in', ('profile_view', 'connection', 'follow', 'message'))]"/>
+                <filter name="type_on_content" string="Han interactuado con mi contenido"
+                    domain="[('signal_type', 'in', ('comment', 'reaction', 'share', 'mention'))]"/>
+                <separator/>
+                <filter name="filter_hot" string="Calientes" domain="[('is_hot', '=', True)]"/>
+                <filter name="filter_icp" string="Encajan con el ICP" domain="[('icp_fit', '=', True)]"/>
+                <separator/>
+                <filter name="filter_lead_sin_enriquecer" string="Lead sin enriquecer"
+                        domain="[('lead_id', '!=', False), ('lead_enrichment_ok', '=', False)]"/>
+                <filter name="filter_lead_enriquecido" string="Lead enriquecido"
+                        domain="[('lead_enrichment_ok', '=', True)]"/>
+                <separator/>
+                <filter name="filter_pending" string="Sin vincular"
+                    domain="[('state', 'in', ('new', 'pending'))]"/>
+                <filter name="filter_with_lead" string="Con lead"
+                    domain="[('lead_id', '!=', False)]"/>
+                <filter name="filter_not_discarded" string="No descartadas"
+                    domain="[('state', '!=', 'discarded')]"/>
+                <separator/>
+                <filter name="filter_last_30" string="Últimos 30 días"
+                    domain="[('signal_date', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_last_90" string="Últimos 90 días"
+                    domain="[('signal_date', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="group_type" string="Tipo de señal" context="{'group_by': 'signal_type'}"/>
+                    <filter name="group_post" string="Publicación" context="{'group_by': 'post_id'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                    <filter name="group_company" string="Empresa" context="{'group_by': 'company_name'}"/>
+                    <filter name="group_profile" string="Perfil" context="{'group_by': 'profile_id'}"/>
+                    <filter name="group_date" string="Fecha" context="{'group_by': 'signal_date:week'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_linkedin_signal" model="ir.actions.act_window">
+        <field name="name">Señales de LinkedIn</field>
+        <field name="res_model">marketing.linkedin.signal</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_not_discarded': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Todavía no ha entrado ninguna señal
+            </p>
+            <p>
+                Las señales llegan desde n8n, que lee las exportaciones de LinkedIn
+                (comentarios, reacciones, vistas de perfil) y las manda al endpoint
+                <code>/vantis/linkedin/signals</code>. Cada señal se deduplica,
+                se puntúa y se cruza con el CRM.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_linkedin_signal_hot" model="ir.actions.act_window">
+        <field name="name">Señales calientes</field>
+        <field name="res_model">marketing.linkedin.signal</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_hot', '=', True), ('state', '!=', 'discarded')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Sin señales calientes ahora mismo
+            </p>
+            <p>
+                Aquí aparecen los contactos cuya puntuación acumulada ha superado
+                el umbral de tu perfil. Son los que merecen una conversación ya.
+            </p>
+        </field>
+    </record>
+
+</odoo>

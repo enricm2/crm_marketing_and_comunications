@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="user_linkedin_enric_marketing" model="marketing.linkedin.profile">
+        <field name="name">Enric — Vantis CRM</field>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="role_description">Consultor B2B y Especialista en CRM &amp; Automatizaciones para equipos de ventas.</field>
+        <field name="business_context">Apasionado por la optimización de procesos comerciales, CRM y marketing automatizado para empresas B2B innovadoras.</field>
+        <field name="icp_description">Focus on B2B SaaS, sales directors, marketing executives, and business founders looking to streamline client acquisition.</field>
+        <field name="webhook_token">vantis_token_enric_default_3398218</field>
+    </record>
+</odoo>

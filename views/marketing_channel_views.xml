@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_channel_list" model="ir.ui.view">
+        <field name="name">marketing.channel.list</field>
+        <field name="model">marketing.channel</field>
+        <field name="arch" type="xml">
+            <list string="Canales de marketing" editable="top">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="available"/>
+                <field name="coming_soon_note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_marketing_channel" model="ir.actions.act_window">
+        <field name="name">Canales</field>
+        <field name="res_model">marketing.channel</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

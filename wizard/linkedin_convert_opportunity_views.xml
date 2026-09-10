@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista de formulario para el mago de conversión -->
+    <record id="view_linkedin_convert_opportunity_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.convert.opportunity.form</field>
+        <field name="model">marketing.linkedin.convert.opportunity</field>
+        <field name="arch" type="xml">
+            <form string="Convertir a Oportunidad">
+                <field name="lead_ids" invisible="1"/>
+                <field name="total_leads" invisible="1"/>
+                <field name="num_leads_to_convert" invisible="1"/>
+                <field name="num_opps_to_move" invisible="1"/>
+
+                <div class="alert alert-info" role="alert" invisible="not lead_ids">
+                    <field name="resumen" nolabel="1" readonly="1"/>
+                </div>
+
+                <group string="Asignación y Estado">
+                    <field name="stage_id" options="{'no_create': True, 'no_open': True}"/>
+                    <field name="user_id" options="{'no_create': True, 'no_open': True}"/>
+                    <field name="team_id" options="{'no_create': True, 'no_open': True}"/>
+                </group>
+
+                <footer>
+                    <button name="action_convert" type="object"
+                            string="Convertir a Oportunidad"
+                            class="btn-primary"
+                            invisible="not lead_ids"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción en el menú "Acciones" de la lista de Leads (crm.lead) -->
+    <record id="action_linkedin_convert_opp_lead" model="ir.actions.server">
+        <field name="name">Convertir a oportunidad (etapa...)</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    action = {
+        'type': 'ir.actions.act_window',
+        'name': 'Convertir a Oportunidad',
+        'res_model': 'marketing.linkedin.convert.opportunity',
+        'view_mode': 'form',
+        'target': 'new',
+        'context': {'default_lead_ids': [(6, 0, records.ids)]},
+    }
+        </field>
+    </record>
+
+    <!-- Acción en el menú "Acciones" de la lista de Señales de LinkedIn (marketing.linkedin.signal) -->
+    <record id="action_linkedin_convert_opp_signal" model="ir.actions.server">
+        <field name="name">Convertir a oportunidad (etapa...)</field>
+        <field name="model_id" ref="model_marketing_linkedin_signal"/>
+        <field name="binding_model_id" ref="model_marketing_linkedin_signal"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    leads = records.mapped('lead_id').filtered(lambda l: l)
+    if leads:
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': 'Convertir a Oportunidad',
+            'res_model': 'marketing.linkedin.convert.opportunity',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_lead_ids': [(6, 0, leads.ids)]},
+        }
+    else:
+        raise UserError('Ninguna de las señales seleccionadas tiene un lead/contacto asociado en el sistema.')
+        </field>
+    </record>
+
+</odoo>

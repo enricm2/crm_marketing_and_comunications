@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_linkedin_capture_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.capture.form</field>
+        <field name="model">marketing.linkedin.capture</field>
+        <field name="arch" type="xml">
+            <form string="Webhook capturado">
+                <header>
+                    <button name="action_create_mapping" type="object"
+                        string="Mapear este evento" class="btn-primary"
+                        invisible="is_test or not event_name"/>
+                    <button name="action_reprocess" type="object"
+                        string="Reprocesar" class="btn-secondary"
+                        invisible="is_test"
+                        help="Vuelve a pasar este payload por el mismo camino que la llamada original. Úsalo tras crear el mapeo."/>
+                    <button name="action_mark_mapped" type="object"
+                        string="Marcar como mapeada" class="btn-primary"
+                        invisible="state == 'mapped'"/>
+                    <button name="action_mark_ignored" type="object"
+                        string="No aplica" class="btn-secondary"
+                        invisible="state == 'ignored'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Prueba de Prosp"
+                        bg_color="text-bg-info" invisible="not is_test"/>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="not is_test">
+                        <b>Es el envío de prueba de Prosp</b>, el que manda al crear o
+                        guardar un webhook. Confirma que la conexión funciona, pero sus
+                        datos son de relleno («first name of the lead»): no hay nada que
+                        mapear ni que meter en el CRM. Para ver un evento real hace falta
+                        que ocurra de verdad — que alguien responda un mensaje o acepte
+                        una invitación en una de tus campañas.
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                        invisible="is_test or state != 'new' or not event_name">
+                        Evento sin mapear. Pulsa <b>Mapear este evento</b> para decidir si
+                        es entrante (lo hace el prospecto, puntúa) o saliente (lo haces tú,
+                        solo historial), y después <b>Reprocesar</b> para no perderlo.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="profile_id"/>
+                            <field name="source"/>
+                            <field name="event_name"/>
+                            <field name="received_at"/>
+                            <field name="is_test"/>
+                        </group>
+                        <group>
+                            <field name="http_method"/>
+                            <field name="content_type"/>
+                            <field name="remote_addr"/>
+                            <field name="query_string"/>
+                            <field name="prosp_event_id"/>
+                            <field name="reprocess_result"/>
+                        </group>
+                    </group>
+                    <group string="Claves de primer nivel">
+                        <field name="payload_keys" nolabel="1" colspan="2" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Cuerpo recibido" name="payload">
+                            <field name="payload" nolabel="1" readonly="1"
+                                widget="ace" options="{'mode': 'json'}"/>
+                        </page>
+                        <page string="Cabeceras" name="headers">
+                            <div class="alert alert-info" role="alert">
+                                Si el servicio manda firma de verificación, aparecerá
+                                aquí. Es lo que hace falta para validar los envíos
+                                cuando el mapeo esté escrito.
+                            </div>
+                            <field name="headers" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_linkedin_capture_list" model="ir.ui.view">
+        <field name="name">marketing.linkedin.capture.list</field>
+        <field name="model">marketing.linkedin.capture</field>
+        <field name="arch" type="xml">
+            <list string="Webhooks capturados"
+                  decoration-muted="state == 'ignored' or is_test"
+                  decoration-success="state == 'mapped'">
+                <field name="received_at"/>
+                <field name="source"/>
+                <field name="event_name"/>
+                <field name="is_test" optional="show"/>
+                <field name="payload_keys" optional="show"/>
+                <field name="http_method" optional="hide"/>
+                <field name="remote_addr" optional="hide"/>
+                <field name="profile_id" optional="hide"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_linkedin_capture_search" model="ir.ui.view">
+        <field name="name">marketing.linkedin.capture.search</field>
+        <field name="model">marketing.linkedin.capture</field>
+        <field name="arch" type="xml">
+            <search string="Webhooks capturados">
+                <field name="event_name"/>
+                <field name="source"/>
+                <field name="payload"/>
+                <filter name="filter_new" string="Sin revisar"
+                    domain="[('state', '=', 'new'), ('is_test', '=', False)]"/>
+                <filter name="filter_test" string="Envíos de prueba"
+                    domain="[('is_test', '=', True)]"/>
+                <filter name="filter_unknown" string="Evento sin identificar"
+                    domain="[('event_name', '=', False)]"/>
+                <group>
+                    <filter name="group_event" string="Evento" context="{'group_by': 'event_name'}"/>
+                    <filter name="group_source" string="Origen" context="{'group_by': 'source'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_linkedin_capture" model="ir.actions.act_window">
+        <field name="name">Webhooks capturados</field>
+        <field name="res_model">marketing.linkedin.capture</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Todavía no ha llegado ningún webhook
+            </p>
+            <p>
+                Copia la <b>URL de captura</b> de tu perfil (pestaña "Integración
+                con n8n") en el webhook del servicio externo y dispara un evento
+                real. Aquí aparecerá el cuerpo y las cabeceras tal cual llegaron,
+                que es lo que hace falta para escribir el mapeo.
+            </p>
+            <p>
+                Nada de lo que llega aquí toca el CRM: es solo diagnóstico.
+                Las capturas se borran solas a los 30 días.
+            </p>
+        </field>
+    </record>
+
+</odoo>

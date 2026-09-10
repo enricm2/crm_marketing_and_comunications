@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_linkedin_prosp_event_list" model="ir.ui.view">
+        <field name="name">marketing.linkedin.prosp.event.list</field>
+        <field name="model">marketing.linkedin.prosp.event</field>
+        <field name="arch" type="xml">
+            <list string="Eventos de Prosp" editable="bottom"
+                  decoration-success="direction == 'inbound'"
+                  decoration-muted="direction == 'ignore'">
+                <field name="name"/>
+                <field name="event_code"/>
+                <field name="direction"/>
+                <field name="signal_type"
+                    readonly="direction != 'inbound'"
+                    required="direction == 'inbound'"/>
+                <field name="notes" optional="show"/>
+                <field name="active" widget="boolean_toggle" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_linkedin_prosp_event_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.prosp.event.form</field>
+        <field name="model">marketing.linkedin.prosp.event</field>
+        <field name="arch" type="xml">
+            <form string="Evento de Prosp">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="event_code"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="direction"/>
+                            <field name="signal_type"
+                                invisible="direction != 'inbound'"
+                                required="direction == 'inbound'"/>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_linkedin_prosp_event" model="ir.actions.act_window">
+        <field name="name">Eventos de Prosp</field>
+        <field name="res_model">marketing.linkedin.prosp.event</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Mapa de eventos de Prosp
+            </p>
+            <p>
+                Prosp automatiza prospección <b>saliente</b>. Solo cuatro de sus
+                eventos los produce el prospecto —responder un mensaje, responder
+                un comentario, aceptar una conexión o una invitación— y son los
+                únicos que puntúan.
+            </p>
+            <p>
+                «Profile Visited», «Like on Last Post» y «Comment on Last Post»
+                son acciones que Prosp hace <b>por ti</b> sobre el prospecto: se
+                anotan en el historial del lead pero no suman puntos, porque si
+                lo hicieran la puntuación mediría tu actividad en vez de su interés.
+            </p>
+        </field>
+    </record>
+
+</odoo>

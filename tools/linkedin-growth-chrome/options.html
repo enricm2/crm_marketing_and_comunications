@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>LinkedIn Growth — Opciones</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, Arial, sans-serif;
+    max-width: 560px; margin: 32px auto; padding: 0 20px; line-height: 1.6; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #1A3A5C; }
+  .sub { color: #666; font-size: 14px; margin: 0 0 24px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 16px 0 5px; }
+  input { width: 100%; padding: 9px 11px; font-size: 14px; border: 1px solid #ccd; border-radius: 7px; box-sizing: border-box; }
+  .hint { font-size: 12.5px; color: #777; margin-top: 5px; }
+  .row { display: flex; gap: 10px; margin-top: 22px; }
+  button { font-size: 14px; font-weight: 600; padding: 9px 18px; border: 0; border-radius: 7px; cursor: pointer; }
+  #save { background: #1A3A5C; color: #fff; }
+  #test { background: #eef1f5; color: #1A3A5C; }
+  #msg { margin-top: 16px; font-size: 14px; padding: 11px 14px; border-radius: 7px; display: none; }
+  #msg.ok { display: block; background: #E8F7EF; color: #1E7F4E; }
+  #msg.err { display: block; background: #FCEDEC; color: #A32820; }
+</style>
+</head>
+<body>
+  <h1>LinkedIn Growth</h1>
+  <p class="sub">Conexión con tu Odoo.</p>
+
+  <label for="odooUrl">URL de Odoo</label>
+  <input id="odooUrl" type="url" placeholder="https://odoo.uniasser.net" autocomplete="off">
+  <p class="hint">Sin barra al final.</p>
+
+  <label for="token">Token del perfil</label>
+  <input id="token" type="text" placeholder="Pégalo desde Odoo" autocomplete="off" spellcheck="false">
+  <p class="hint">Odoo → LinkedIn Growth → Configuración → Perfiles de LinkedIn →
+     tu perfil → pestaña «Integración con n8n», con botón de copiar.</p>
+
+  <div class="row">
+    <button id="save" type="button">Guardar</button>
+    <button id="test" type="button">Probar conexión</button>
+  </div>
+  <div id="msg"></div>
+  <script src="options.js"></script>
+</body>
+</html>

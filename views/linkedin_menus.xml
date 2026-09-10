@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú propio, separado de "Campañas de marketing".
+
+         El flujo de LinkedIn no comparte datos ni estados con el de campañas
+         en frío: mezclarlos en el mismo menú invitaría a confundir una señal
+         entrante (alguien que te ha buscado) con un envío saliente (tú
+         buscándole a él), que es justo la distinción que da valor a esto. -->
+
+    <menuitem id="menu_linkedin_root"
+        name="LinkedIn Growth"
+        web_icon="crm_marketing_and_comunications,static/description/icon_linkedin.png"
+        sequence="91"
+        groups="group_marketing_campaigns_user"/>
+
+    <!-- OJO con el orden: el menú raíz no tiene acción propia, así que Odoo
+         abre la del primer submenú por secuencia. Ese primero DEBE apuntar a
+         una vista normal. "Importar CSV" abre un diálogo (target="new"): si
+         quedara el primero, entrar en la app abriría el diálogo flotando sobre
+         una pantalla vacía y al cerrarlo el usuario se saldría de la app. -->
+
+    <menuitem id="menu_linkedin_signals"
+        name="Señales"
+        parent="menu_linkedin_root"
+        action="action_linkedin_signal"
+        sequence="10"/>
+
+    <menuitem id="menu_linkedin_signals_hot"
+        name="Señales calientes"
+        parent="menu_linkedin_root"
+        action="action_linkedin_signal_hot"
+        sequence="15"/>
+
+    <menuitem id="menu_linkedin_import"
+        name="Importar CSV o pegado"
+        parent="menu_linkedin_root"
+        action="action_linkedin_import_wizard"
+        sequence="20"/>
+
+    <menuitem id="menu_linkedin_leads"
+        name="Leads desde LinkedIn"
+        parent="menu_linkedin_root"
+        action="action_linkedin_leads"
+        sequence="30"/>
+
+    <menuitem id="menu_linkedin_posts"
+        name="Publicaciones"
+        parent="menu_linkedin_root"
+        action="action_linkedin_post"
+        sequence="40"/>
+
+    <menuitem id="menu_linkedin_diagnostics"
+        name="Router de embudo"
+        parent="menu_linkedin_root"
+        action="action_linkedin_diagnostic"
+        sequence="50"/>
+
+    <menuitem id="menu_linkedin_config"
+        name="Configuración"
+        parent="menu_linkedin_root"
+        sequence="90"/>
+
+    <menuitem id="menu_linkedin_profiles"
+        name="Perfiles de LinkedIn"
+        parent="menu_linkedin_config"
+        action="action_linkedin_profile"
+        sequence="10"/>
+
+    <menuitem id="menu_linkedin_prosp_events"
+        name="Eventos de Prosp"
+        parent="menu_linkedin_config"
+        action="action_linkedin_prosp_event"
+        sequence="25"/>
+
+    <menuitem id="menu_linkedin_captures"
+        name="Webhooks capturados"
+        parent="menu_linkedin_config"
+        action="action_linkedin_capture"
+        sequence="30"/>
+
+    <menuitem id="menu_linkedin_batches"
+        name="Lotes de ingesta"
+        parent="menu_linkedin_config"
+        action="action_linkedin_batch"
+        sequence="20"/>
+
+</odoo>

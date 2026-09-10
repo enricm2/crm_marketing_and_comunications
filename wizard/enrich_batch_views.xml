@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_crm_lead_enrich_batch_form" model="ir.ui.view">
+        <field name="name">crm.lead.enrich.batch.form</field>
+        <field name="model">crm.lead.enrich.batch</field>
+        <field name="arch" type="xml">
+            <form string="Enriquecer leads">
+                <field name="lead_ids" invisible="1"/>
+                <field name="n_procesar" invisible="1"/>
+                <group>
+                    <field name="alcance" widget="radio"/>
+                </group>
+                <div class="alert alert-info" role="alert">
+                    <field name="resumen" nolabel="1" readonly="1"/>
+                </div>
+                <footer>
+                    <button name="action_enriquecer" type="object"
+                            string="Enriquecer ahora" class="btn-primary"
+                            invisible="n_procesar == 0"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_crm_lead_enrich_batch" model="ir.actions.act_window">
+        <field name="name">Enriquecer leads</field>
+        <field name="res_model">crm.lead.enrich.batch</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+
+</odoo>

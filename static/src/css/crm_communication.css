@@ -1,0 +1,15 @@
+/* Formulario de comunicación CRM — diálogo ancho */
+.modal-dialog:has(.o_crm_communication_form) {
+    max-width: min(90vw, 1200px) !important;
+    width: min(90vw, 1200px) !important;
+}
+
+/* Altura del editor del cuerpo del email.
+   En Odoo 19 el widget html ignora options="{'height': N}" — la única forma
+   de fijar la altura es por CSS. */
+.o_crm_comm_body .odoo-editor-editable,
+.o_crm_comm_body .note-editable {
+    min-height: 350px;
+    max-height: 70vh;
+    overflow-y: auto;
+}

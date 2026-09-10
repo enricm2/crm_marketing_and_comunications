@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit User Form (Admin) -->
+    <record id="view_users_form_inherit_crm_gmail" model="ir.ui.view">
+        <field name="name">res.users.form.inherit.crm.gmail</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='preferences']/group" position="inside">
+                <group string="Configuración de Sincronización Gmail" name="group_crm_gmail_sync">
+                    <field name="crm_imap_host" placeholder="e.g. imap.gmail.com"/>
+                    <field name="crm_imap_user" placeholder="e.g. tuempresa@gmail.com"/>
+                    <field name="crm_imap_password" password="True" placeholder="xxxx xxxx xxxx xxxx"/>
+                    <field name="crm_imap_folder_sent" placeholder="e.g. [Gmail]/Sent Mail"/>
+                    <field name="crm_imap_folder_inbox" placeholder="e.g. INBOX"/>
+                    <field name="crm_imap_sync_folder" placeholder="e.g. (opcional) etiqueta a limitar"/>
+                    <div colspan="2" class="mt-2">
+                        <button name="action_test_crm_gmail_connection" 
+                                type="object" 
+                                string="Probar conexión" 
+                                class="btn btn-secondary fa fa-refresh" 
+                                help="Prueba la conexión IMAP con las credenciales configuradas"/>
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit User Preferences Form (Self-Service) -->
+    <record id="view_users_form_simple_modif_inherit_crm_gmail" model="ir.ui.view">
+        <field name="name">res.users.preferences.form.inherit.crm.gmail</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='other_preferences']" position="inside">
+                <group string="Sincronización Gmail (CRM)" name="group_crm_gmail_sync_pref" colspan="2">
+                    <field name="crm_imap_host" placeholder="e.g. imap.gmail.com"/>
+                    <field name="crm_imap_user" placeholder="e.g. tuempresa@gmail.com"/>
+                    <field name="crm_imap_password" password="True" placeholder="xxxx xxxx xxxx xxxx"/>
+                    <field name="crm_imap_folder_sent" placeholder="e.g. [Gmail]/Sent Mail"/>
+                    <field name="crm_imap_folder_inbox" placeholder="e.g. INBOX"/>
+                    <field name="crm_imap_sync_folder" placeholder="e.g. (opcional) etiqueta a limitar"/>
+                    <div colspan="2" class="mt-2">
+                        <button name="action_test_crm_gmail_connection" 
+                                type="object" 
+                                string="Probar conexión" 
+                                class="btn btn-secondary fa fa-refresh" 
+                                help="Prueba la conexión IMAP con las credenciales configuradas"/>
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

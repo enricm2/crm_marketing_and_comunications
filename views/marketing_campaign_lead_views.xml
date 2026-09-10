@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_campaign_lead_form" model="ir.ui.view">
+        <field name="name">marketing.campaign.lead.form</field>
+        <field name="model">marketing.campaign.lead</field>
+        <field name="arch" type="xml">
+            <form string="Lead en campaña">
+                <header>
+                    <button name="action_generate_personalized_content" type="object"
+                        string="Generar apertura con IA"
+                        invisible="exclusion_reason != 'none'"
+                        class="btn-primary"/>
+                    <button name="action_approve_content" type="object"
+                        string="Aprobar contenido"
+                        invisible="content_approved or not personalized_content or exclusion_reason != 'none'"
+                        class="btn-success"/>
+                    <button name="action_send" type="object"
+                        string="Enviar ahora"
+                        invisible="not content_approved or sent_at or exclusion_reason != 'none'"
+                        class="btn-primary"/>
+                    <button name="action_reintentar_ia" type="object"
+                        string="Reintentar IA"
+                        invisible="exclusion_reason != 'error_ia'"
+                        class="btn-warning"
+                        title="Vuelve a generar el contenido. Si funciona, el lead sale de la exclusión."/>
+                    <button name="action_classify_response" type="object"
+                        string="Clasificar respuesta con IA"
+                        invisible="not last_inbound_message"
+                        class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <!-- Aviso de exclusión -->
+                    <div class="alert alert-danger" role="alert"
+                        invisible="exclusion_reason == 'none'">
+                        <strong>EXCLUIDO:</strong>
+                        <field name="ai_error" readonly="1"
+                               invisible="exclusion_reason != 'error_ia'"
+                               string="Causa del error de IA"/>
+                        <field name="ai_error_at" readonly="1"
+                               invisible="exclusion_reason != 'error_ia'"/>
+                        <field name="exclusion_reason" readonly="1"/> —
+                        Este lead no puede recibir comunicaciones de marketing.
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="campaign_id" readonly="1"/>
+                            <field name="lead_id"/>
+                            <field name="channel_used"/>
+                            <field name="unsubscribe_token" readonly="1" groups="base.group_system"/>
+                        </group>
+                        <group>
+                            <field name="content_approved" widget="boolean_toggle"/>
+                            <field name="content_approved_by" readonly="1"
+                                invisible="not content_approved"/>
+                            <field name="content_approved_at" readonly="1"
+                                invisible="not content_approved"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Contenido personalizado">
+                            <group string="Párrafo de apertura (IA)">
+                                <field name="personalized_opening" nolabel="1" colspan="2"
+                                    widget="text" style="min-height: 80px;"/>
+                            </group>
+                            <group string="Contenido final listo para enviar">
+                                <field name="personalized_content" widget="html"
+                                    nolabel="1" colspan="2" options="{'resizable': true}"/>
+                            </group>
+                        </page>
+
+                        <page string="Tracking de envío">
+                            <group>
+                                <group>
+                                    <field name="sent_at" readonly="1"/>
+                                    <field name="delivered_at" readonly="1"/>
+                                    <field name="opened_at" readonly="1"/>
+                                    <field name="clicked_at" readonly="1"/>
+                                    <field name="replied_at" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="bounced" readonly="1"/>
+                                    <field name="bounced_at" readonly="1" invisible="not bounced"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Respuesta y clasificación IA">
+                            <group string="Último mensaje recibido">
+                                <field name="last_inbound_message" nolabel="1" colspan="2"
+                                    widget="text" style="min-height: 80px;"/>
+                                <field name="last_inbound_at"/>
+                            </group>
+                            <group string="Clasificación IA">
+                                <group>
+                                    <field name="ai_classification"/>
+                                    <field name="ai_confidence" widget="percentage"/>
+                                    <field name="ai_close_probability" widget="percentage"/>
+                                    <field name="ai_classified_at" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="ai_classification_reason" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Seguimiento">
+                            <group>
+                                <field name="follow_up_state"/>
+                                <field name="follow_up_approved_by" readonly="1"/>
+                            </group>
+                            <group string="Contenido del seguimiento" invisible="follow_up_state == 'not_needed'">
+                                <field name="follow_up_content" widget="html"
+                                    nolabel="1" colspan="2"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_marketing_campaign_lead_list" model="ir.ui.view">
+        <field name="name">marketing.campaign.lead.list</field>
+        <field name="model">marketing.campaign.lead</field>
+        <field name="arch" type="xml">
+            <list string="Leads de campaña"
+                  decoration-success="content_approved and sent_at"
+                  decoration-warning="not content_approved and not exclusion_reason"
+                  decoration-danger="exclusion_reason != 'none'"
+                  decoration-muted="bounced">
+                <field name="lead_id"/>
+                <field name="lead_name"/>
+                <field name="lead_email"/>
+                <field name="channel_used"/>
+                <!-- La apertura es LO ÚNICO que cambia entre un lead y otro: el
+                     resto del email es la plantilla, idéntica para todos.
+                     Revisar la campaña = leer esta columna. -->
+                <field name="personalized_opening" string="Apertura generada por IA"/>
+                <field name="content_approved" widget="boolean"/>
+                <field name="sent_at"/>
+                <field name="opened_at"/>
+                <field name="replied_at"/>
+                <field name="ai_classification"/>
+                <field name="ai_confidence" widget="percentage"/>
+                <field name="exclusion_reason"
+                    decoration-danger="exclusion_reason != 'none'"/>
+                <button name="action_generate_personalized_content" type="object"
+                    string="Generar IA" icon="fa-magic"
+                    invisible="exclusion_reason != 'none'"/>
+                <button name="action_approve_content" type="object"
+                    string="Aprobar" icon="fa-check"
+                    invisible="content_approved or exclusion_reason != 'none'"/>
+                <button name="action_send" type="object"
+                    string="Enviar" icon="fa-paper-plane"
+                    invisible="not content_approved or sent_at or exclusion_reason != 'none'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_marketing_campaign_lead_search" model="ir.ui.view">
+        <field name="name">marketing.campaign.lead.search</field>
+        <field name="model">marketing.campaign.lead</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="lead_id"/>
+                <field name="lead_name"/>
+                <field name="lead_email"/>
+                <field name="campaign_id"/>
+                <separator/>
+                <filter string="Sin aprobar" name="not_approved"
+                    domain="[('content_approved','=',False),('exclusion_reason','=','none')]"/>
+                <filter string="Aprobados y listos para enviar" name="ready"
+                    domain="[('content_approved','=',True),('sent_at','=',False),('exclusion_reason','=','none')]"/>
+                <filter string="Enviados" name="sent"
+                    domain="[('sent_at','!=',False)]"/>
+                <filter string="Respondidos" name="replied"
+                    domain="[('replied_at','!=',False)]"/>
+                <filter string="Interesados" name="interested"
+                    domain="[('ai_classification','=','interested')]"/>
+                <filter string="Quieren demo" name="wants_demo"
+                    domain="[('ai_classification','=','wants_demo')]"/>
+                <filter string="Excluidos RGPD" name="excluded"
+                    domain="[('exclusion_reason','!=','none')]"/>
+                <separator/>
+                <filter string="Seguimientos pendientes" name="follow_up_pending"
+                    domain="[('follow_up_state','=','pending')]"/>
+                <group>
+                    <filter string="Campaña" name="by_campaign" context="{'group_by': 'campaign_id'}"/>
+                    <filter string="Canal" name="by_channel" context="{'group_by': 'channel_used'}"/>
+                    <filter string="Clasificación IA" name="by_classification" context="{'group_by': 'ai_classification'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_marketing_campaign_leads_all" model="ir.actions.act_window">
+        <field name="name">Seguimientos pendientes</field>
+        <field name="res_model">marketing.campaign.lead</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('follow_up_state','=','pending')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay seguimientos pendientes de aprobar
+            </p>
+        </field>
+    </record>
+
+    <!-- Custom List View for Campaign Replies (Gmail-like) -->
+    <record id="view_marketing_campaign_lead_inbox_list" model="ir.ui.view">
+        <field name="name">marketing.campaign.lead.inbox.list</field>
+        <field name="model">marketing.campaign.lead</field>
+        <field name="arch" type="xml">
+            <list string="Buzón de Respuestas" create="0" delete="0" edit="0"
+                  decoration-success="ai_classification in ('interested', 'highly_interested', 'wants_demo')"
+                  decoration-danger="ai_classification in ('unsubscribe_request', 'do_not_disturb')"
+                  decoration-muted="ai_classification in ('not_interested', 'courtesy')"
+                  decoration-warning="ai_classification in ('needs_human', 'objection')"
+                  decoration-info="ai_classification == 'question'">
+                <field name="lead_name" string="Remitente" class="fw-bold"/>
+                <field name="lead_email" string="Email"/>
+                <field name="campaign_id" string="Campaña"/>
+                <field name="last_inbound_message" string="Mensaje" class="text-truncate"/>
+                <field name="last_inbound_at" string="Recibido el" widget="datetime"/>
+                <field name="ai_classification" string="Clasificación" widget="badge"
+                       decoration-success="ai_classification in ('interested', 'highly_interested', 'wants_demo')"
+                       decoration-danger="ai_classification in ('unsubscribe_request', 'do_not_disturb')"
+                       decoration-muted="ai_classification in ('not_interested', 'courtesy')"
+                       decoration-warning="ai_classification in ('needs_human', 'objection')"
+                       decoration-info="ai_classification == 'question'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Window Action for Campaign Response Inbox -->
+    <record id="action_marketing_campaign_lead_inbox" model="ir.actions.act_window">
+        <field name="name">Buzón de Respuestas</field>
+        <field name="res_model">marketing.campaign.lead</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('last_inbound_message', '!=', False)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_marketing_campaign_lead_inbox_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_marketing_campaign_lead_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                El buzón de respuestas está vacío
+            </p>
+            <p>
+                Aquí verás los correos de respuesta que envíen los leads tras lanzar tus campañas.
+                La IA los clasificará automáticamente según el interés mostrado.
+            </p>
+        </field>
+    </record>
+</odoo>

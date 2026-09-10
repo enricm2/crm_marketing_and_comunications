@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_linkedin_post_form" model="ir.ui.view">
+        <field name="name">marketing.linkedin.post.form</field>
+        <field name="model">marketing.linkedin.post</field>
+        <field name="arch" type="xml">
+            <form string="Publicación de LinkedIn">
+                <header>
+                    <button name="action_import_signals" type="object"
+                        string="Importar señales de esta publicación"
+                        class="btn-primary"
+                        help="Abre el asistente de importación con esta publicación ya seleccionada, para que las señales queden vinculadas a ella."/>
+                    <button name="action_mark_published" type="object"
+                        string="Marcar como publicada" class="btn-secondary"
+                        invisible="state == 'published'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,scheduled,published"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_signals" icon="fa-bolt">
+                            <field name="signal_count" widget="statinfo" string="Señales"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                            name="action_view_leads" icon="fa-user-plus">
+                            <field name="lead_count" widget="statinfo" string="Leads"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Titular / gancho"/>
+                        <h1><field name="name" placeholder="La primera línea del post"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="profile_id"/>
+                            <field name="post_format"/>
+                            <field name="content_pillar"/>
+                            <field name="cta"/>
+                        </group>
+                        <group>
+                            <field name="published_date" invisible="state == 'draft'"/>
+                            <field name="scheduled_date" invisible="state != 'scheduled'"/>
+                            <field name="url" widget="url"/>
+                            <field name="external_id"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Contenido" name="content">
+                            <field name="content" nolabel="1"
+                                placeholder="Texto de la publicación."/>
+                        </page>
+                        <page string="Rendimiento" name="metrics">
+                            <group>
+                                <group string="Alcance e interacción">
+                                    <field name="impressions"/>
+                                    <field name="reactions"/>
+                                    <field name="comments"/>
+                                    <field name="shares"/>
+                                    <field name="clicks"/>
+                                    <field name="followers_gained"/>
+                                </group>
+                                <group string="Resultado">
+                                    <field name="engagement_rate"/>
+                                    <field name="signal_count"/>
+                                    <field name="lead_count"/>
+                                    <field name="conversation_rate"/>
+                                    <field name="metrics_updated_at"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                Las métricas las actualiza n8n contra
+                                <code>/vantis/linkedin/posts</code>, identificando la
+                                publicación por su <b>ID / URN en LinkedIn</b>. Mientras ese
+                                campo esté vacío, cada envío creará una publicación nueva.
+                            </div>
+                        </page>
+                        <page string="Señales generadas" name="signals">
+                            <div class="alert alert-info" role="alert">
+                                Esta lista es un reflejo: muestra las señales que ya
+                                existen y apuntan a esta publicación. <b>No se añaden
+                                desde aquí.</b> Usa el botón
+                                <b>Importar señales de esta publicación</b> de arriba,
+                                que abre el asistente con la publicación ya elegida.
+                                Para vincular señales que ya importaste sueltas, ve a
+                                <b>Señales</b>, selecciónalas con las casillas y edita
+                                el campo <b>Publicación</b> de una sola vez.
+                            </div>
+                            <field name="signal_ids" nolabel="1" readonly="1">
+                                <list>
+                                    <field name="signal_date"/>
+                                    <field name="contact_name"/>
+                                    <field name="company_name"/>
+                                    <field name="signal_type"/>
+                                    <field name="score"/>
+                                    <field name="is_hot"/>
+                                    <field name="lead_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_linkedin_post_list" model="ir.ui.view">
+        <field name="name">marketing.linkedin.post.list</field>
+        <field name="model">marketing.linkedin.post</field>
+        <field name="arch" type="xml">
+            <list string="Publicaciones de LinkedIn"
+                  decoration-success="lead_count &gt; 0"
+                  decoration-muted="state == 'archived'">
+                <field name="published_date"/>
+                <field name="name"/>
+                <field name="content_pillar" optional="show"/>
+                <field name="post_format" optional="show"/>
+                <field name="impressions" sum="Impresiones"/>
+                <field name="reactions" optional="show" sum="Reacciones"/>
+                <field name="comments" optional="show" sum="Comentarios"/>
+                <field name="engagement_rate" avg="Engagement medio"/>
+                <field name="signal_count" sum="Señales"/>
+                <field name="lead_count" sum="Leads"/>
+                <field name="state"/>
+                <field name="profile_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_linkedin_post_kanban" model="ir.ui.view">
+        <field name="name">marketing.linkedin.post.kanban</field>
+        <field name="model">marketing.linkedin.post</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false">
+                <field name="engagement_rate"/>
+                <field name="lead_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_record_top mb-2">
+                            <strong class="o_kanban_record_title">
+                                <field name="name"/>
+                            </strong>
+                        </div>
+                        <div class="text-muted">
+                            <field name="content_pillar"/>
+                            <span t-if="record.published_date.raw_value">
+                                · <field name="published_date"/>
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge text-bg-secondary me-1">
+                                <field name="impressions"/> impresiones
+                            </span>
+                            <span class="badge text-bg-info me-1">
+                                <field name="engagement_rate"/>% eng.
+                            </span>
+                            <span class="badge text-bg-success"
+                                t-if="record.lead_count.raw_value > 0">
+                                <field name="lead_count"/> leads
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_linkedin_post_search" model="ir.ui.view">
+        <field name="name">marketing.linkedin.post.search</field>
+        <field name="model">marketing.linkedin.post</field>
+        <field name="arch" type="xml">
+            <search string="Publicaciones">
+                <field name="name"/>
+                <field name="content"/>
+                <field name="content_pillar"/>
+                <filter name="filter_published" string="Publicadas"
+                    domain="[('state', '=', 'published')]"/>
+                <filter name="filter_with_leads" string="Con leads"
+                    domain="[('lead_count', '&gt;', 0)]"/>
+                <separator/>
+                <filter name="filter_last_30" string="Últimos 30 días"
+                    domain="[('published_date', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="group_pillar" string="Pilar de contenido"
+                        context="{'group_by': 'content_pillar'}"/>
+                    <filter name="group_format" string="Formato"
+                        context="{'group_by': 'post_format'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                    <filter name="group_month" string="Mes"
+                        context="{'group_by': 'published_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_linkedin_post" model="ir.actions.act_window">
+        <field name="name">Publicaciones de LinkedIn</field>
+        <field name="res_model">marketing.linkedin.post</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra tu primera publicación
+            </p>
+            <p>
+                Cada publicación guarda su rendimiento y, sobre todo, cuántas
+                conversaciones y leads salieron de ella. Ese cruce es lo que permite
+                al router distinguir un problema de posicionamiento de uno de captación.
+            </p>
+        </field>
+    </record>
+
+</odoo>

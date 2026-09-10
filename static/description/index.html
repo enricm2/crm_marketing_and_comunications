@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vantis CRM + Marketing + Communications</title>
+    <style>
+        .vantis-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        .vantis-badge {
+            background-color: #f39c12;
+            color: white;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        .vantis-title {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .vantis-subtitle {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .vantis-card {
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: white;
+            transition: transform 0.2s;
+        }
+        .vantis-card:hover {
+            transform: translateY(-5px);
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #ebf3ff;
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .feature-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .feature-text {
+            color: #555;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        .vantis-alert {
+            background-color: #fff9e6;
+            border-left: 5px solid #f39c12;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 30px 0;
+            color: #665200;
+        }
+        .vantis-setup-step {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .step-num {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e3c72;
+            background: #eef5ff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-body {
+            font-size: 15px;
+            color: #444;
+            line-height: 1.6;
+            padding-top: 8px;
+        }
+        .mock-screenshot {
+            background: #f4f6f9;
+            border: 2px solid #e1e4e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #333;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8f9fa; padding: 20px;">
+
+<div style="max-width: 1000px; margin: 0 auto;">
+
+    <!-- HEADER BRANDING -->
+    <div class="vantis-header">
+        <span class="vantis-badge">PREMIUM EXTENSION</span>
+        <h1 class="vantis-title">Vantis CRM + Marketing + Communications</h1>
+        <p class="vantis-subtitle">
+            Unify B2B Marketing Campaigns, Multi-User Gmail Sync, AI-Generated Copywriting, and Direct LinkedIn Prosp API Sincronization directly inside Odoo 19.
+        </p>
+    </div>
+
+    <!-- MAIN BENEFITS CARDS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        
+        <!-- CARD 1: MULTI-USER GMAIL -->
+        <div class="vantis-card">
+            <div class="icon-circle">✉</div>
+            <h2 class="feature-title">Multi-User Gmail Sync</h2>
+            <p class="feature-text">
+                Allows each salesperson to connect their own Gmail inbox securely in their <b>Odoo Profile</b> using IMAP and Google App Passwords. Includes a real-time <b>"Test Connection"</b> button and a robust background background sync cron that maps emails directly to Lead Chatters.
+            </p>
+        </div>
+
+        <!-- CARD 2: AI COPYWRITING -->
+        <div class="vantis-card">
+            <div class="icon-circle">🤖</div>
+            <h2 class="feature-title">AI Personalization Engine</h2>
+            <p class="feature-text">
+                Harnesses advanced LLMs (Anthropic Claude, Google Gemini, OpenAI GPT) to custom-write unique icebreakers and tailored pitch messages for each individual lead in your campaign based on their industry, company profile, and CRM pain points.
+            </p>
+        </div>
+
+        <!-- CARD 3: LINKEDIN PROSP -->
+        <div class="vantis-card">
+            <div class="icon-circle">💼</div>
+            <h2 class="feature-title">Direct LinkedIn &amp; Prosp API</h2>
+            <p class="feature-text">
+                Connects natively with Prosp's JSON-RPC MCP server to sync lists and active campaigns directly into Odoo dropdown fields. Supports mass exporting approved custom AI messages directly to your Prosp campaigns. Staggered background queue drip protects your account from WAF or Cloudflare blocks.
+            </p>
+        </div>
+
+    </div>
+
+    <!-- VALUE ALERTS & PRICING -->
+    <div class="vantis-alert">
+        <h3 style="margin-top: 0; font-weight: bold; font-size: 18px;">🎁 15-Day Free Trial Available!</h3>
+        <p style="margin-bottom: 0; font-size: 15px; line-height: 1.6;">
+            We believe in our product. You can request a <b>15-day free trial license</b> by sending an email with your Odoo Database UUID (found in Settings) to <b>info@uniasser.com</b>. We will quickly assign you a trial key to let you test all premium features before purchasing.
+        </p>
+    </div>
+
+    <!-- DYNAMIC USER WORKFLOW GUIDE -->
+    <div class="vantis-card" style="margin-top: 30px;">
+        <h2 style="font-size: 26px; font-weight: 800; color: #1e3c72; margin-bottom: 25px;">User Guide: How It Works</h2>
+        
+        <div class="vantis-setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+                <b>Setup Corporate Branding:</b> Go to <i>Settings ➔ Vantis CRM + Marketing</i> and enter your company name, marketing email, support phone, and logo text. The AI copywriter reads these parameters in real-time to tailor all email footers and WhatsApp templates dynamically.
+            </div>
+        </div>
+
+        <div class="mock-screenshot">
+            <b>[SIMULATED SCREENSHOT - CORPORATE IDENTITY PANEL]</b><br/>
+            ---------------------------------------------------------------<br/>
+            <b>Company Name:</b> Vantis Consulting &lt;comercial@vantis.com&gt;<br/>
+            <b>Support Phone:</b> +34 964 50 50 95<br/>
+            <b>Logo Header Text:</b> VANTIS [Ajustes Guardados]<br/>
+            <b>Clave de Licencia (License Key):</b> [ VANTIS-XXXX-XXXX-XXXX ] [Probar Licencia]<br/>
+            ---------------------------------------------------------------
+        </div>
+
+        <div class="vantis-setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+                <b>Configure Salesperson Gmail:</b> Each salesperson goes to their <b>"My Profile / Preferences"</b> screen, enters their Gmail IMAP connection credentials, and clicks the <b>"Probar conexión"</b> (Test Connection) button to receive instant success feedback from Odoo.
+            </div>
+        </div>
+
+        <div class="mock-screenshot">
+            <b>[SIMULATED SCREENSHOT - INDIVIDUAL GMAIL CONFIGURATION]</b><br/>
+            ---------------------------------------------------------------<br/>
+            <b>IMAP Server:</b> imap.gmail.com  |  <b>Gmail User:</b> enric@uniasser.com<br/>
+            <b>App Password:</b> ****************  |  <b>Sent Folder:</b> [Gmail]/Sent Mail<br/>
+            <button style="padding: 4px 8px; font-size: 11px;">[Probar conexión]</button>  ===>  <b>[✔ Conexión Exitosa con Gmail (IMAP)]</b><br/>
+            ---------------------------------------------------------------
+        </div>
+
+        <div class="vantis-setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+                <b>Design Campaigns with AI copywriting:</b> Create a Campaign inside the new top-level menu <b>"Campañas de Márketing"</b>, choose your channels (Email, WhatsApp, or LinkedIn), select your target stage, and pull leads. Create an AI template, design your hook prompt, and click **"✨ Generar contenido IA"** to compose personalized copies for every single lead in background batches.
+            </div>
+        </div>
+
+        <div class="vantis-setup-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+                <b>Synchronize and Launch Prosp direct:</b> If you checked LinkedIn, click **"Sincronizar Opciones de Prosp"**. Choose your campaign and target list from the elegant dropdown menus (retrieved live using Prosp's MCP JSON-RPC protocol!). Click **"Aprobar todo"** and then **"Lanzar en Prosp"**. Odoo will asynchronously stagger and drip-upload 15 leads every 10 minutes to protect your LinkedIn account from WAF/Cloudflare rate-limits.
+            </div>
+        </div>
+
+        <div class="mock-screenshot">
+            <b>[SIMULATED SCREENSHOT - CAMPAIGN LINKEDIN EXPORT WORKSPACE]</b><br/>
+            ---------------------------------------------------------------<br/>
+            <b>Canales Activos:</b> [x] LinkedIn (Prosp)<br/>
+            <button style="padding: 4px 8px; font-size: 11px;">[🔄 Sincronizar Opciones de Prosp]</button>  ===>  <b>[Loaded 8 Campaigns &amp; 14 Lists]</b><br/>
+            <b>Campaña Prosp:</b> [ Campaña Foto Fija IA (576ccbaa-...) ]<br/>
+            <b>Lista Prosp:</b> [ CEOs y Founders Startups (1683438d-...) ]<br/>
+            <button style="padding: 4px 8px; font-size: 11px; background: #007bff; color:white;">[💼 Lanzar en Prosp]</button><br/>
+            ---------------------------------------------------------------
+        </div>
+
+    </div>
+
+    <!-- SUPPORT AND PRICE -->
+    <div style="display: flex; gap: 20px; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #e1e4e6; color: #666; font-size: 14px;">
+        <div>
+            <b>Author:</b> Vantis &bull; <b>Support Email:</b> <a href="mailto:info@uniasser.com">info@uniasser.com</a>
+        </div>
+        <div>
+            <b>Licensed under:</b> Odoo Proprietary License (OPL-1)
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

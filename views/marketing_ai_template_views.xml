@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_ai_template_form" model="ir.ui.view">
+        <field name="name">marketing.ai.template.form</field>
+        <field name="model">marketing.ai.template</field>
+        <field name="arch" type="xml">
+            <form string="Plantilla IA">
+                <header>
+                    <button name="action_submit_review" type="object"
+                        string="Enviar a revisión"
+                        invisible="state != 'draft'"
+                        class="btn-primary"/>
+                    <button name="action_approve" type="object"
+                        string="Aprobar plantilla"
+                        invisible="state != 'pending_review'"
+                        class="btn-success"/>
+                    <button name="action_reject" type="object"
+                        string="Rechazar"
+                        invisible="state != 'pending_review'"
+                        class="btn-danger"/>
+                    <button name="action_reset_draft" type="object"
+                        string="Volver a borrador"
+                        invisible="state not in ('rejected', 'approved')"/>
+                    <button name="action_previsualizar" type="object"
+                        string="Ver cómo queda"
+                        class="btn-primary"
+                        title="Sustituye los placeholders y ejecuta los bloques [PROMPT] con la IA para enseñarte el mensaje final."/>
+                    <button name="action_view_html_source" type="object"
+                        string="&lt;/&gt; Ver código HTML"
+                        invisible="channel != 'email'"
+                        class="btn-secondary"
+                        title="Muestra el HTML completo del email para copiarlo y pegarlo en otra herramienta."/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,pending_review,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="campaign_id" readonly="1"/>
+                            <field name="channel"/>
+                            <field name="subject" invisible="channel != 'email'"
+                                placeholder="Asunto del email"/>
+                            <field name="ai_model_used" readonly="1"/>
+                            <field name="version" readonly="1"/>
+                        </group>
+                        <group invisible="state not in ('approved', 'rejected')">
+                            <field name="reviewed_by" readonly="1"/>
+                            <field name="reviewed_at" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Motivo de rechazo" invisible="state != 'rejected'">
+                        <field name="rejection_reason" nolabel="1" colspan="2"/>
+                    </group>
+
+                    <notebook>
+
+                        <!-- ═══ TAB EMAIL ═══ -->
+                        <page string="Diseño y contenido" invisible="channel != 'email'">
+
+                            <!-- Panel de diseño visual -->
+                            <group string="⚙️ Configuración visual">
+                                <group string="Logo">
+                                    <field name="logo_image" widget="image"
+                                        options="{'size': [200, 80], 'accepted_file_extensions': '.png,.jpg,.jpeg,.gif,.svg,.webp'}"
+                                        nolabel="1" colspan="2"/>
+                                    <field name="logo_image_filename" invisible="1"/>
+                                    <field name="logo_alt" placeholder="Uniasser Consulting"/>
+                                </group>
+                                <group string="Colores">
+                                    <field name="color_header_bg" widget="hex_color"/>
+                                    <field name="color_header_text" widget="hex_color"/>
+                                    <field name="color_body_bg" widget="hex_color"/>
+                                    <field name="color_body_text" widget="hex_color"/>
+                                    <field name="color_cta_bg" widget="hex_color"/>
+                                    <field name="color_footer_bg" widget="hex_color"/>
+                                </group>
+                                <group string="Botón CTA">
+                                    <field name="cta_button_text"
+                                        placeholder="Solicitar demo"/>
+                                    <field name="cta_button_url"
+                                        placeholder="https://uniasser.com/demo"/>
+                                </group>
+                            </group>
+
+                                    <!-- Botones de acción sobre el HTML -->
+                            <div style="margin: 12px 0 16px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <button name="action_regenerate_with_ai" type="object"
+                                    string="✨ Regenerar contenido con IA"
+                                    class="btn btn-primary btn-sm"
+                                    title="Claude genera nuevo contenido del email basándose en el producto y descripción de la campaña. Sobreescribe el contenido actual."/>
+                                <button name="action_rebuild_html" type="object"
+                                    string="🎨 Aplicar colores y logo al HTML"
+                                    class="btn btn-secondary btn-sm"
+                                    title="Aplica los colores, logo y botón CTA configurados arriba al HTML existente sin tocar el contenido."/>
+                                <button name="action_generate_blank_html" type="object"
+                                    string="📄 Plantilla en blanco (sin IA)"
+                                    class="btn btn-secondary btn-sm"
+                                    title="Genera una estructura vacía con tus colores para escribir tú el contenido desde cero."/>
+                            </div>
+
+                            <!-- Instrucciones del editor -->
+                            <div class="alert alert-info" role="alert"
+                                invisible="state == 'approved'">
+                                <strong>✏️ Cómo editar:</strong> Haz clic sobre cualquier texto del email para editarlo directamente.
+                                La barra de herramientas te permite cambiar fuentes, colores, insertar imágenes y añadir enlaces.
+                                El placeholder <code>{{OPENING_PARAGRAPH}}</code> se sustituirá automáticamente por el texto personalizado de cada lead.
+                                El placeholder <code>{{UNSUBSCRIBE_URL}}</code> en el pie es el enlace de baja — no lo elimines.
+                                Además puedes usar <code>{nombre}</code>, <code>{empresa}</code>, <code>{sector}</code>,
+                                <code>{pais}</code> y más: la lista completa, con los valores reales de un lead, está en la
+                                pestaña <b>Vista previa</b>.
+                            </div>
+
+                            <!-- Editor HTML visual -->
+                            <field name="base_html" widget="html"
+                                options="{'resizable': true, 'style-inline': true}"
+                                nolabel="1" colspan="2"
+                                style="min-height: 500px;"/>
+                        </page>
+
+                        <!-- ═══ TAB WHATSAPP ═══ -->
+                        <page string="Mensaje WhatsApp" invisible="channel != 'whatsapp'">
+                            <div class="alert alert-info" role="alert"
+                                invisible="state == 'approved'">
+                                Edita el texto del mensaje. El placeholder
+                                <code>{{OPENING_PARAGRAPH}}</code> se sustituirá
+                                por el texto personalizado de cada lead.
+                                También puedes usar <code>{nombre}</code>, <code>{empresa}</code>,
+                                <code>{sector}</code>, <code>{pais}</code>… (lista completa en
+                                la pestaña <b>Vista previa</b>).
+                                Máximo recomendado: 1000 caracteres.
+                            </div>
+                            <field name="base_text" nolabel="1" colspan="2"
+                                widget="text"
+                                style="font-family: monospace; min-height: 300px; font-size: 14px;"/>
+                        </page>
+
+                        <!-- ═══ TAB LINKEDIN ═══ -->
+                        <page string="Mensaje LinkedIn" invisible="channel != 'linkedin'">
+                            <div class="alert alert-info" role="alert"
+                                invisible="state == 'approved'">
+                                Edita el texto del mensaje de LinkedIn. El placeholder
+                                <code>{{OPENING_PARAGRAPH}}</code> se sustituirá
+                                por el texto personalizado de cada lead.
+                                También puedes usar <code>{nombre}</code>, <code>{empresa}</code>,
+                                <code>{sector}</code>, <code>{pais}</code>… (lista completa en
+                                la pestaña <b>Vista previa</b>).
+                                Máximo recomendado: 800 caracteres.
+                            </div>
+                            <field name="base_text" nolabel="1" colspan="2"
+                                widget="text"
+                                style="font-family: monospace; min-height: 300px; font-size: 14px;"/>
+                        </page>
+
+                        <!-- ═══ TAB VISTA PREVIA ═══ -->
+                        <page string="Vista previa" name="preview">
+                            <group>
+                                <field name="preview_lead_id"
+                                       options="{'no_create': True}"
+                                       placeholder="Vacío = primer lead de la campaña"/>
+                                <field name="preview_info" readonly="1"
+                                       invisible="not preview_info"/>
+                            </group>
+
+                            <div class="alert alert-info" role="alert">
+                                <b>Placeholders disponibles.</b> Escríbelos entre llaves
+                                en el texto y se sustituyen en cada envío.
+                                <field name="placeholders_ayuda" nolabel="1" readonly="1"/>
+                            </div>
+
+                            <div class="alert alert-secondary" role="alert">
+                                <b>Bloques de IA:</b> lo que escribas entre
+                                <code>[PROMPT]</code> y <code>[/PROMPT]</code> es una
+                                instrucción para la IA, no texto del email. Al pulsar
+                                <b>«Ver cómo queda»</b> se ejecutan de verdad y ves el
+                                resultado aquí abajo. Puedes combinarlos con placeholders:
+                                <code>[PROMPT]menciona un reto típico de {sector}[/PROMPT]</code>.
+                            </div>
+
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="preview_html">
+                                Todavía no has generado ninguna vista previa.
+                                Pulsa <b>«Ver cómo queda»</b> arriba.
+                            </div>
+
+                            <field name="preview_html" nolabel="1" readonly="1"
+                                   invisible="not preview_html"/>
+                        </page>
+
+                        <!-- ═══ TAB PROMPT ═══ -->
+                        <page string="Prompt IA (trazabilidad)">
+                            <field name="ai_prompt_used" nolabel="1" colspan="2" readonly="1"
+                                widget="text"
+                                style="font-family: monospace; font-size: 11px; min-height: 200px;"/>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_marketing_ai_template_list" model="ir.ui.view">
+        <field name="name">marketing.ai.template.list</field>
+        <field name="model">marketing.ai.template</field>
+        <field name="arch" type="xml">
+            <list string="Plantillas IA"
+                  decoration-success="state == 'approved'"
+                  decoration-warning="state == 'pending_review'"
+                  decoration-danger="state == 'rejected'">
+                <field name="campaign_id"/>
+                <field name="channel"/>
+                <field name="subject"/>
+                <field name="state"/>
+                <field name="reviewed_by"/>
+                <field name="version"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_marketing_ai_template" model="ir.actions.act_window">
+        <field name="name">Plantillas IA</field>
+        <field name="res_model">marketing.ai.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ('pending_review', 'draft'))]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay plantillas pendientes de revisión</p>
+        </field>
+    </record>
+
+    <!-- Diálogo para ver y copiar el HTML completo -->
+    <record id="view_marketing_ai_template_html" model="ir.ui.view">
+        <field name="name">marketing.ai.template.html.source</field>
+        <field name="model">marketing.ai.template</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <form string="Código HTML">
+                <div class="alert alert-info" role="alert">
+                    <strong>Para copiarlo:</strong> haz clic dentro del recuadro y pulsa
+                    <code>Cmd+A</code> (seleccionar todo) y luego <code>Cmd+C</code>.
+                </div>
+                <div class="alert alert-warning" role="alert">
+                    <strong>Antes de pegarlo en otra plataforma, revisa dos marcadores:</strong>
+                    <ul class="mb-0 mt-1">
+                        <li>
+                            <code>{{OPENING_PARAGRAPH}}</code> — es el párrafo que la IA
+                            escribe distinto para cada empresa. Fuera de Odoo no se sustituye:
+                            reemplázalo por un texto genérico o bórralo.
+                        </li>
+                        <li>
+                            <code>{{UNSUBSCRIBE_URL}}</code> — enlace de baja. Si envías desde
+                            otra plataforma, quita ese bloque y deja que sea ella quien añada
+                            su propio enlace de baja; si no, los destinatarios no podrán darse
+                            de baja de verdad y estarás incumpliendo.
+                        </li>
+                    </ul>
+                </div>
+                <field name="html_source" nolabel="1" readonly="1"
+                    widget="text"
+                    style="font-family:monospace; font-size:11px; min-height:420px; width:100%"/>
+                <footer>
+                    <button string="Cerrar" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

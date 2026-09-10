@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_esp_provider_form" model="ir.ui.view">
+        <field name="name">marketing.esp.provider.form</field>
+        <field name="model">marketing.esp.provider</field>
+        <field name="arch" type="xml">
+            <form string="Proveedor ESP">
+                <header>
+                    <button name="action_test_connection" type="object"
+                        string="Probar conexión" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="display_name_custom" placeholder="Nombre personalizado (opcional)"/>
+                            <field name="from_name" placeholder="Nombre del remitente"/>
+                            <field name="from_email" placeholder="email@tudominio.com"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <!-- Fields shown for Amazon SES (using SMTP protocol) -->
+                            <field name="api_endpoint" string="Servidor SMTP" placeholder="ej. email-smtp.eu-west-1.amazonaws.com" invisible="name != 'aws_ses'"/>
+                            <field name="api_token" password="True" string="Usuario SMTP" placeholder="ej. AKIA..." invisible="name != 'aws_ses'"/>
+                            <field name="api_secondary_key" password="True" string="Contraseña SMTP" invisible="name != 'aws_ses'"/>
+                            <field name="webhook_secret" password="True" string="Configuration Set" placeholder="Opcional, ej. MiConfigSet" invisible="name != 'aws_ses'"/>
+
+                            <!-- Fields shown for standard Odoo SMTP -->
+                            <field name="mail_server_id" invisible="name != 'odoo_smtp'" options="{'no_create': True}"/>
+
+                            <!-- Fields shown for other providers (except odoo_smtp and aws_ses) -->
+                            <field name="api_token" password="True" string="API Token / Key" invisible="name in ('odoo_smtp', 'aws_ses')"/>
+                            <field name="api_secondary_key" password="True" string="Clave secundaria" invisible="name in ('odoo_smtp', 'aws_ses')"/>
+                            <field name="api_endpoint" placeholder="Dejar vacío para usar endpoint oficial" invisible="name in ('odoo_smtp', 'aws_ses')"/>
+                            <field name="webhook_secret" password="True" string="Secreto webhook" invisible="name in ('odoo_smtp', 'aws_ses')"/>
+                        </group>
+                    </group>
+                    <group string="Instrucciones de configuración">
+                        <field name="notes" nolabel="1" colspan="2"
+                            placeholder="Pega aquí los pasos de configuración específicos de este ESP..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_marketing_esp_provider_list" model="ir.ui.view">
+        <field name="name">marketing.esp.provider.list</field>
+        <field name="model">marketing.esp.provider</field>
+        <field name="arch" type="xml">
+            <list string="Proveedores ESP">
+                <field name="name"/>
+                <field name="from_email"/>
+                <field name="from_name"/>
+                <field name="campaign_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_marketing_esp_provider" model="ir.actions.act_window">
+        <field name="name">Proveedores de email (ESP)</field>
+        <field name="res_model">marketing.esp.provider</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

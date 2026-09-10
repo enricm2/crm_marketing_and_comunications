@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_pain_point_form" model="ir.ui.view">
+        <field name="name">marketing.pain_point.rule.form</field>
+        <field name="model">marketing.pain_point.rule</field>
+        <field name="arch" type="xml">
+            <form string="Punto de dolor por sector">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sector_keyword"
+                                placeholder="Ej: agencia, inmobiliaria, asistencia técnica"/>
+                            <field name="service_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Descripción del punto de dolor">
+                        <field name="pain_point_description" nolabel="1" colspan="2"
+                            placeholder="Describe el problema principal que tiene este sector en relación al servicio..."/>
+                    </group>
+                    <group string="Notas internas">
+                        <field name="notes" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_marketing_pain_point_list" model="ir.ui.view">
+        <field name="name">marketing.pain_point.rule.list</field>
+        <field name="model">marketing.pain_point.rule</field>
+        <field name="arch" type="xml">
+            <list string="Puntos de dolor por sector">
+                <field name="name"/>
+                <field name="sector_keyword"/>
+                <field name="service_id"/>
+                <field name="pain_point_description"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_marketing_pain_point" model="ir.actions.act_window">
+        <field name="name">Puntos de dolor por sector</field>
+        <field name="res_model">marketing.pain_point.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define los puntos de dolor por sector
+            </p>
+            <p>
+                Estas reglas permiten a Claude personalizar el párrafo de apertura
+                de cada email/WhatsApp según el sector del lead.
+            </p>
+        </field>
+    </record>
+</odoo>

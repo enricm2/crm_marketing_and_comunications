@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_followup_launch_wizard_form" model="ir.ui.view">
+        <field name="name">marketing.followup.launch.form</field>
+        <field name="model">marketing.followup.launch</field>
+        <field name="arch" type="xml">
+            <form string="Lanzar seguimiento por etapa">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Crea una <b>mini campaña de seguimiento</b> sobre los leads de una
+                        etapa: recuerda a quien no respondió a un contacto anterior y
+                        ajusta el mensaje con IA para reengancharlo y cerrar una reunión.
+                        Usa el mismo sistema de plantillas y de envío que una campaña normal.
+                    </div>
+
+                    <group>
+                        <field name="name" placeholder="Ej: Seguimiento agencias BCN - octubre"/>
+                    </group>
+
+                    <separator string="A quién seguir"/>
+                    <group>
+                        <group>
+                            <field name="stage_id" options="{'no_create': True}"/>
+                            <field name="only_no_reply"/>
+                            <field name="skip_recent_days"/>
+                        </group>
+                        <group>
+                            <field name="candidate_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Brief"/>
+                    <group>
+                        <field name="service_id"/>
+                        <field name="source_campaign_id" options="{'no_create': True}"/>
+                        <field name="purpose" colspan="2"/>
+                        <field name="target_audience" colspan="2"/>
+                    </group>
+
+                    <separator string="Envío y plantilla"/>
+                    <group>
+                        <field name="esp_provider_id" options="{'no_create': True}"/>
+                        <field name="template_mode" widget="radio"/>
+                        <field name="source_template_id"
+                            invisible="template_mode != 'copy'"
+                            required="template_mode == 'copy'"
+                            options="{'no_create': True}"/>
+                        <div colspan="2" class="text-muted small"
+                             invisible="template_mode != 'ai'">
+                            El seguimiento se crea en borrador y sin plantilla. Desde su
+                            ficha, pulsa <b>«Generar plantilla con IA»</b>: se generará una
+                            plantilla pensada para un segundo contacto (recordatorio + una
+                            propuesta de reunión), con su bloque <code>[PROMPT]</code>.
+                        </div>
+                    </group>
+
+                    <separator string="Mapeo de etapas (respuestas)"/>
+                    <group>
+                        <field name="stage_interested_id" options="{'no_create': True}"/>
+                        <field name="stage_demo_id" options="{'no_create': True}"/>
+                        <field name="stage_lost_id" options="{'no_create': True}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_launch" type="object"
+                        string="Crear seguimiento" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_followup_launch_wizard" model="ir.actions.act_window">
+        <field name="name">Lanzar seguimiento por etapa</field>
+        <field name="res_model">marketing.followup.launch</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_robinson_cache_list" model="ir.ui.view">
+        <field name="name">marketing.robinson.cache.list</field>
+        <field name="model">marketing.robinson.cache</field>
+        <field name="arch" type="xml">
+            <list string="Caché Lista Robinson" create="0"
+                  decoration-danger="is_robinson == True">
+                <field name="fingerprint_type"/>
+                <field name="fingerprint_hash"/>
+                <field name="is_robinson" widget="boolean"/>
+                <field name="checked_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_marketing_robinson_cache" model="ir.actions.act_window">
+        <field name="name">Caché Lista Robinson</field>
+        <field name="res_model">marketing.robinson.cache</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Sin entradas en la caché de Lista Robinson
+            </p>
+            <p>
+                Las consultas a la API de Lista Robinson se cachean aquí durante el período
+                configurado (por defecto 90 días) para evitar consultas redundantes.
+            </p>
+        </field>
+    </record>
+</odoo>
