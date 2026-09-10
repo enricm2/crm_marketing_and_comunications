@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ── Actions ── -->
+    <record id="action_whatsapp_accounts" model="ir.actions.act_window">
+        <field name="name">Cuentas WhatsApp</field>
+        <field name="res_model">whatsapp.account</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- ── List view ── -->
+    <record id="view_whatsapp_account_list" model="ir.ui.view">
+        <field name="name">whatsapp.account.list</field>
+        <field name="model">whatsapp.account</field>
+        <field name="arch" type="xml">
+            <list string="Cuentas WhatsApp" decoration-muted="not active"
+                  decoration-success="qr_state == 'connected'"
+                  decoration-warning="qr_state == 'connecting'">
+                <field name="name"/>
+                <field name="connection_type"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="phone_number_id" optional="hide"/>
+                <field name="qr_state" string="Estado QR"
+                       invisible="connection_type != 'qr_code'"/>
+                <field name="connection_info" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="last_error" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form view principal ── -->
+    <record id="view_whatsapp_account_form" model="ir.ui.view">
+        <field name="name">whatsapp.account.form</field>
+        <field name="model">whatsapp.account</field>
+        <field name="arch" type="xml">
+            <form string="Cuenta WhatsApp">
+                <header>
+                    <!-- Botones Meta Business -->
+                    <button name="action_test_connection"
+                            string="Probar conexión"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-plug"
+                            invisible="connection_type != 'meta_business'"/>
+                    <button name="action_sync_templates"
+                            string="Sincronizar plantillas"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-refresh"
+                            invisible="connection_type != 'meta_business'"/>
+
+                    <!-- Botones QR Code -->
+                    <button name="action_connect_qr"
+                            string="Conectar via QR"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-qrcode"
+                            invisible="connection_type != 'qr_code' or qr_state in ('connected', 'connecting')"/>
+                    <button name="action_check_qr_status"
+                            string="Verificar estado"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="connection_type != 'qr_code' or qr_state != 'connecting'"/>
+                    <button name="action_configure_evolution_webhook"
+                            string="Configurar webhook"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-link"
+                            invisible="connection_type != 'qr_code' or qr_state != 'connected'"/>
+                    <button name="action_disconnect_qr"
+                            string="Desconectar"
+                            type="object"
+                            invisible="connection_type != 'qr_code' or qr_state not in ('connected', 'connecting')"/>
+
+                    <field name="qr_state" widget="statusbar"
+                           statusbar_visible="draft,connecting,connected,disconnected"
+                           invisible="connection_type != 'qr_code'"/>
+                </header>
+
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre de la cuenta..." required="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Configuración">
+                            <field name="connection_type" widget="radio"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group string="Estado" invisible="connection_type != 'qr_code' or not connection_info">
+                            <field name="connection_info" readonly="1"/>
+                            <field name="last_qr_check" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- ══ Modo Meta Business ══ -->
+                    <group string="Meta Business API"
+                           invisible="connection_type != 'meta_business'">
+                        <group>
+                            <field name="phone_number_id"
+                                   placeholder="123456789012345"
+                                   required="connection_type == 'meta_business'"/>
+                            <field name="waba_id"
+                                   placeholder="123456789012345"
+                                   required="connection_type == 'meta_business'"/>
+                        </group>
+                        <group groups="uniasser_whatsapp.group_whatsapp_admin">
+                            <field name="access_token"
+                                   password="True"
+                                   placeholder="EAAxxxxxxxxxx..."
+                                   required="connection_type == 'meta_business'"/>
+                            <field name="app_secret"
+                                   password="True"
+                                   placeholder="App Secret de la App de Meta"/>
+                            <field name="webhook_verify_token"
+                                   placeholder="mi_token_secreto_aleatorio"
+                                   required="connection_type == 'meta_business'"/>
+                        </group>
+                        <div class="alert alert-info" role="alert" colspan="2">
+                            <strong>URL del webhook:</strong>
+                            <code> https://TU-ODOO.com/whatsapp/webhook</code><br/>
+                            Configura esta URL en Meta Developer → WhatsApp → Configuration → Webhook.
+                        </div>
+                    </group>
+
+                    <!-- ══ Modo QR Code ══ -->
+                    <group string="QR Code — Evolution API Bridge"
+                           invisible="connection_type != 'qr_code'">
+                        <group>
+                            <field name="evolution_url"
+                                   placeholder="http://localhost:8080"
+                                   required="connection_type == 'qr_code'"/>
+                            <field name="evolution_instance"
+                                   placeholder="empresa_wa"
+                                   required="connection_type == 'qr_code'"/>
+                        </group>
+                        <group groups="uniasser_whatsapp.group_whatsapp_admin">
+                            <field name="evolution_api_key"
+                                   password="True"
+                                   required="connection_type == 'qr_code'"/>
+                        </group>
+                        <div class="alert alert-info" role="alert" colspan="2">
+                            <strong>Modo QR Code</strong> — No requiere cuenta de desarrollador Meta.<br/>
+                            Pulsa <em>Conectar via QR</em> y escanea el código con WhatsApp en el móvil
+                            (igual que WhatsApp Web). El bridge Evolution API debe estar activo en
+                            <code>http://localhost:8080</code>.
+                        </div>
+                    </group>
+
+                    <!-- ══ Imagen QR (mientras se espera escaneo) ══ -->
+                    <group invisible="connection_type != 'qr_code' or qr_state != 'connecting'">
+                        <div style="text-align:center; padding:20px; background:#f0fff4; border:2px solid #25D366; border-radius:12px; margin:12px 0;">
+                            <h3 style="color:#25D366;">📱 Escanea con WhatsApp</h3>
+                            <p style="color:#555;">
+                                Abre WhatsApp en tu móvil →
+                                <strong>⋮ → Dispositivos vinculados → Vincular dispositivo</strong>
+                            </p>
+                            <field name="qr_code_image" widget="image"
+                                   options="{'zoom': true}"
+                                   style="max-width:280px; margin:12px auto; display:block; border:4px solid #25D366; border-radius:12px; padding:8px; background:white;"/>
+                            <div style="margin-top:12px;">
+                                <button name="action_check_qr_status"
+                                        string="✅ Verificar conexión"
+                                        type="object"
+                                        class="btn btn-success btn-sm"/>
+                                <button name="action_refresh_qr"
+                                        string="🔄 Nuevo QR"
+                                        type="object"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        style="margin-left:8px;"/>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Error -->
+                    <group invisible="not last_error"
+                           groups="uniasser_whatsapp.group_whatsapp_admin">
+                        <field name="last_error" readonly="1" string="Último error"
+                               style="color:red;"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Popup solo QR ── -->
+    <record id="view_whatsapp_account_qr_popup" model="ir.ui.view">
+        <field name="name">whatsapp.account.form.qr.popup</field>
+        <field name="model">whatsapp.account</field>
+        <field name="arch" type="xml">
+            <form string="Escanea el QR con WhatsApp">
+                <sheet>
+                    <div style="text-align:center; padding:24px;">
+                        <h2 style="color:#25D366;">📱 Escanea con WhatsApp</h2>
+                        <p style="color:#555; margin-bottom:16px;">
+                            WhatsApp → <strong>⋮ → Dispositivos vinculados → Vincular dispositivo</strong>
+                        </p>
+                        <field name="qr_code_image" widget="image"
+                               options="{'zoom': true}"
+                               style="max-width:280px; margin:auto; display:block; border:4px solid #25D366; border-radius:12px; padding:8px; background:white;"/>
+                        <div style="margin-top:16px; color:#888; font-size:13px;">
+                            Estado: <field name="qr_state" readonly="1" nolabel="1"/>
+                        </div>
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_check_qr_status"
+                            string="✅ Verificar conexión"
+                            type="object"
+                            class="btn-primary"/>
+                    <button name="action_refresh_qr"
+                            string="🔄 Nuevo QR"
+                            type="object"
+                            class="btn-secondary"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

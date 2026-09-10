@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_whatsapp" model="ir.ui.view">
+        <field name="name">res.config.settings.view.whatsapp</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="WhatsApp"
+                     string="WhatsApp"
+                     name="uniasser_whatsapp"
+                     logo="/uniasser_whatsapp/static/description/icon.png"
+                     groups="base.group_system">
+
+                    <block title="Cuentas WhatsApp Business" name="wa_accounts">
+                        <setting string="Cuentas conectadas" id="wa_accounts_setting">
+                            <div class="text-muted">
+                                Conecta tu número de WhatsApp Business a través de Meta Cloud API.
+                            </div>
+                            <div class="mt8">
+                                <button name="action_open_whatsapp_accounts"
+                                        type="object"
+                                        string="Gestionar cuentas"
+                                        icon="oi-arrow-right"
+                                        class="btn-link"/>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Plantillas" name="wa_templates">
+                        <setting string="Plantillas de mensaje" id="wa_templates_setting">
+                            <div class="text-muted">
+                                Plantillas aprobadas en Meta para envíos fuera de ventana de 24h.
+                            </div>
+                            <div class="mt8">
+                                <button name="action_open_whatsapp_templates"
+                                        type="object"
+                                        string="Ver plantillas"
+                                        icon="oi-arrow-right"
+                                        class="btn-link"/>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Webhook" name="wa_webhook">
+                        <setting string="URL del webhook" id="wa_webhook_setting">
+                            <div class="text-muted">
+                                Configura esta URL en Meta Developer → WhatsApp → Configuration → Webhook:
+                            </div>
+                            <div class="mt8">
+                                <code>https://odoo.uniasser.net/whatsapp/webhook</code>
+                            </div>
+                        </setting>
+                    </block>
+
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

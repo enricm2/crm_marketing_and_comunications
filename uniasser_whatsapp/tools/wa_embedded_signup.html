@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Embedded Signup — Uniasser</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 640px;
+            width: 100%;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: #25D366;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .logo h1 { font-size: 22px; color: #111b21; }
+        .logo p  { font-size: 13px; color: #667781; margin-top: 2px; }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #0369a1;
+            line-height: 1.6;
+        }
+
+        .info-box strong { display: block; margin-bottom: 4px; color: #075985; }
+
+        .step-list {
+            list-style: none;
+            margin-bottom: 28px;
+        }
+
+        .step-list li {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+            color: #3b4a54;
+            line-height: 1.5;
+        }
+
+        .step-num {
+            width: 24px;
+            height: 24px;
+            background: #25D366;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* ── Botón principal ── */
+        #btn-signup {
+            width: 100%;
+            padding: 15px 24px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        #btn-signup:hover  { background: #1da851; }
+        #btn-signup:active { transform: scale(0.98); }
+        #btn-signup:disabled { background: #ccc; cursor: default; }
+
+        /* ── Secciones de resultado ── */
+        .result-section {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .result-section.visible { display: block; }
+
+        .result-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .result-title.green  { color: #16a34a; }
+        .result-title.blue   { color: #2563eb; }
+        .result-title.red    { color: #dc2626; }
+        .result-title.purple { color: #7c3aed; }
+
+        pre {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* ── Caja de credenciales para copiar a Odoo ── */
+        .credentials-box {
+            background: #f0fdf4;
+            border: 2px solid #16a34a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .credentials-box h3 {
+            color: #15803d;
+            font-size: 15px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cred-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cred-item {
+            background: white;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .cred-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #16a34a;
+            margin-bottom: 4px;
+        }
+
+        .cred-value {
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            color: #111827;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .cred-copy {
+            font-size: 11px;
+            color: #2563eb;
+            cursor: pointer;
+            margin-top: 4px;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .status-bar {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-bar.info    { background: #eff6ff; color: #1d4ed8; }
+        .status-bar.success { background: #f0fdf4; color: #15803d; }
+        .status-bar.error   { background: #fef2f2; color: #dc2626; }
+        .status-bar.warning { background: #fffbeb; color: #b45309; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <!-- Cabecera -->
+    <div class="logo">
+        <div class="logo-icon">🟢</div>
+        <div>
+            <h1>WhatsApp Embedded Signup</h1>
+            <p>Uniasser Consulting — migración con coexistencia</p>
+        </div>
+    </div>
+
+    <!-- Info contextual -->
+    <div class="info-box">
+        <strong>¿Qué hace este botón?</strong>
+        Abre el flujo oficial de Meta para conectar tu número <strong>+34 722 77 40 75</strong>
+        a la Cloud API de WhatsApp <strong>sin perder el acceso desde la app del móvil</strong>
+        (modo coexistencia). Al terminar verás el <code>phone_number_id</code> y
+        <code>waba_id</code> que necesitas pegar en Odoo.
+    </div>
+
+    <!-- Qué va a pasar -->
+    <ul class="step-list">
+        <li>
+            <div class="step-num">1</div>
+            <div>Meta abre un popup donde inicias sesión con tu cuenta de Facebook/Business vinculada a Uniasser Consulting.</div>
+        </li>
+        <li>
+            <div class="step-num">2</div>
+            <div>Seleccionas tu WABA "Uniasser Consulting SL" y el número +34 722 77 40 75. Meta te pedirá confirmación de coexistencia.</div>
+        </li>
+        <li>
+            <div class="step-num">3</div>
+            <div>Recibirás en pantalla el <strong>authorization code</strong> y los identificadores del número. Cópialos a tu módulo de Odoo.</div>
+        </li>
+    </ul>
+
+    <!-- Botón principal -->
+    <button id="btn-signup" onclick="startEmbeddedSignup()">
+        <span>▶</span>
+        Conectar WhatsApp Business con Odoo
+    </button>
+
+    <!-- Barra de estado -->
+    <div id="status-bar" class="status-bar info" style="display:none"></div>
+
+    <!-- ── Sección: Authorization Code ── -->
+    <div id="section-code" class="result-section">
+        <div class="result-title blue">📋 Authorization Code recibido</div>
+        <p style="font-size:13px;color:#667781;margin-bottom:8px;">
+            Este código caduca en <strong>~5 minutos</strong>. No lo necesitas pegar en ningún sitio de Odoo —
+            el módulo lo intercambiará automáticamente por un token cuando configures la cuenta.
+            Si quieres hacerlo manualmente, úsalo con tu System User para obtener el Access Token.
+        </p>
+        <pre id="auth-code-display"></pre>
+    </div>
+
+    <!-- ── Sección: Credenciales para Odoo ── -->
+    <div id="section-credentials" class="credentials-box" style="display:none">
+        <h3>✅ Copia estos valores en tu módulo de Odoo</h3>
+        <div class="cred-row">
+            <div class="cred-item">
+                <div class="cred-label">Phone Number ID</div>
+                <div class="cred-value" id="val-phone-number-id">—</div>
+                <button class="cred-copy" onclick="copyValue('val-phone-number-id')">Copiar</button>
+            </div>
+            <div class="cred-item">
+                <div class="cred-label">WhatsApp Business Account ID (WABA ID)</div>
+                <div class="cred-value" id="val-waba-id">—</div>
+                <button class="cred-copy" onclick="copyValue('val-waba-id')">Copiar</button>
+            </div>
+            <div class="cred-item">
+                <div class="cred-label">Coexistencia confirmada</div>
+                <div class="cred-value" id="val-coexistence">—</div>
+            </div>
+        </div>
+        <p style="font-size:12px;color:#16a34a;margin-top:14px;">
+            Menú Odoo → WhatsApp → Cuentas → Editar → pega estos valores en
+            <em>Phone Number ID</em> y <em>WABA ID</em>.
+        </p>
+    </div>
+
+    <!-- ── Sección: Payload raw completo (para diagnóstico) ── -->
+    <div id="section-raw" class="result-section">
+        <div class="result-title purple">🔍 Payload completo (diagnóstico)</div>
+        <pre id="raw-payload-display"></pre>
+    </div>
+
+    <!-- ── Sección: Error ── -->
+    <div id="section-error" class="result-section">
+        <div class="result-title red">⚠ Error o flujo cancelado</div>
+        <pre id="error-display"></pre>
+    </div>
+
+</div><!-- /card -->
+
+
+<script>
+    // ═══════════════════════════════════════════════════════════════════════
+    //  CONFIGURACIÓN — sustituye estos dos valores antes de abrir la página
+    // ═══════════════════════════════════════════════════════════════════════
+    const APP_ID    = 'YOUR_APP_ID';     // Panel WhOdoo → Configuración → Básica → App ID
+    const CONFIG_ID = 'YOUR_CONFIG_ID';  // Facebook Login for Business → Configuraciones → ID numérico
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  PASO 1: Escuchar mensajes del iframe de Embedded Signup
+    //
+    //  Meta envía un postMessage desde el popup con tipo 'WA_EMBEDDED_SIGNUP'
+    //  conteniendo phone_number_id, waba_id y datos de coexistencia.
+    //  IMPORTANTE: hay que registrar este listener ANTES de FB.init.
+    // ═══════════════════════════════════════════════════════════════════════
+    window.addEventListener('message', function(event) {
+        // Seguridad: solo aceptar mensajes del dominio de Facebook/Meta
+        if (!['https://www.facebook.com', 'https://web.facebook.com'].includes(event.origin)) {
+            return;
+        }
+
+        let data;
+        try {
+            data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        } catch (e) {
+            // No era JSON, ignorar
+            return;
+        }
+
+        console.log('[WA Signup] postMessage recibido:', data);
+
+        // Meta envía varios tipos de eventos durante el flujo
+        if (data.type === 'WA_EMBEDDED_SIGNUP') {
+            const payload = data.data || data;
+            showCredentialsFromEvent(payload);
+        }
+    });
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  PASO 2: Inicializar el SDK de Facebook cuando cargue
+    //
+    //  fbAsyncInit es el hook estándar de Facebook para ejecutar código
+    //  justo cuando el SDK está listo. Aquí solo inicializamos — el login
+    //  lo dispara el usuario con el botón.
+    // ═══════════════════════════════════════════════════════════════════════
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId  : APP_ID,
+            cookie : true,          // necesario para que el servidor pueda leer la sesión
+            xfbml  : true,          // parsear plugins sociales de Facebook si los hay
+            version: 'v21.0',       // versión de Graph API (actualizar si Meta lo exige)
+        });
+
+        console.log('[WA Signup] FB SDK inicializado (appId=' + APP_ID + ', v21.0)');
+        setStatus('SDK de Facebook cargado. Listo para conectar.', 'info');
+    };
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  PASO 3: Disparar el flujo de Embedded Signup
+    //
+    //  FB.login() abre el popup oficial de Meta con el flujo de onboarding.
+    //  Los params clave:
+    //
+    //  · config_id: ID de tu configuración de "Facebook Login for Business"
+    //               (creada en Panel → Facebook Login for Business → Configuraciones)
+    //
+    //  · response_type: 'code' → recibiremos un authorization code de OAuth
+    //                    (el módulo de Odoo lo intercambia por el access token)
+    //
+    //  · override_default_response_type: true → fuerza el response_type indicado
+    //
+    //  · extras.featureType: 'coexistence' activa el flujo para números que
+    //    ya están en la app de WhatsApp Business del móvil, permitiendo que
+    //    el número funcione SIMULTÁNEAMENTE en la app y en la Cloud API.
+    //    Valores alternativos según versión de Meta:
+    //      - 'coexistence' (documentación 2024-2025)
+    //      - 'whatsapp_business_app_onboarding' (versiones anteriores)
+    //    Si Meta devuelve error de featureType inválido, prueba dejarlo vacío
+    //    ('') y gestiona la coexistencia desde el panel de WhatsApp Manager.
+    //
+    //  · extras.sessionInfoVersion: '3' → versión del payload del postMessage
+    //    que Meta enviará con los datos del número y WABA.
+    // ═══════════════════════════════════════════════════════════════════════
+    function startEmbeddedSignup() {
+        if (APP_ID === 'YOUR_APP_ID' || CONFIG_ID === 'YOUR_CONFIG_ID') {
+            showError(
+                'Primero sustituye YOUR_APP_ID y YOUR_CONFIG_ID\n' +
+                'en el código fuente de esta página.\n\n' +
+                'App ID → Panel WhOdoo → Configuración → Básica\n' +
+                'Config ID → Facebook Login for Business → Configuraciones'
+            );
+            return;
+        }
+
+        setStatus('Abriendo el flujo de Meta... (si no aparece el popup, desactiva el bloqueador de ventanas emergentes)', 'info');
+        document.getElementById('btn-signup').disabled = true;
+
+        FB.login(function(response) {
+            document.getElementById('btn-signup').disabled = false;
+            console.log('[WA Signup] FB.login callback:', response);
+
+            if (response.authResponse && response.authResponse.code) {
+                // ── Éxito: tenemos el authorization code ──────────────────
+                const code = response.authResponse.code;
+                setStatus('✅ Autorización completada. Copia los valores de abajo.', 'success');
+                showAuthCode(code);
+
+            } else if (response.status === 'not_authorized') {
+                showError(
+                    'El usuario no autorizó la app.\n' +
+                    'Vuelve a intentarlo y acepta todos los permisos en el popup.'
+                );
+            } else if (response.status === 'unknown') {
+                showError(
+                    'El usuario cerró el popup sin completar el flujo.\n' +
+                    'Puedes volver a intentarlo pulsando el botón.'
+                );
+            } else {
+                showError(
+                    'Respuesta inesperada de Meta:\n' +
+                    JSON.stringify(response, null, 2)
+                );
+            }
+        }, {
+            config_id                    : CONFIG_ID,
+            response_type                : 'code',
+            override_default_response_type: true,
+            extras: {
+                setup              : {},         // deja vacío para usar la WABA/número que ya tienes
+                featureType        : 'coexistence',  // ← activa coexistencia con app móvil
+                sessionInfoVersion : '3',        // versión del payload postMessage
+            },
+        });
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Helpers de UI
+    // ═══════════════════════════════════════════════════════════════════════
+
+    function showAuthCode(code) {
+        const el = document.getElementById('section-code');
+        el.classList.add('visible');
+        document.getElementById('auth-code-display').textContent =
+            '// Authorization Code (caduca en ~5 minutos)\n' + code + '\n\n' +
+            '// Para intercambiarlo manualmente por un access token:\n' +
+            '// POST https://graph.facebook.com/v21.0/oauth/access_token\n' +
+            '//   ?client_id=APP_ID\n' +
+            '//   &client_secret=APP_SECRET\n' +
+            '//   &code=' + code + '\n' +
+            '//   &redirect_uri=YOUR_REDIRECT_URI';
+    }
+
+    function showCredentialsFromEvent(payload) {
+        console.log('[WA Signup] Credenciales recibidas via postMessage:', payload);
+
+        // Extraer los campos — Meta puede enviarlos en distintos niveles del objeto
+        const phoneNumberId = payload.phone_number_id
+                           || payload.phoneNumberId
+                           || (payload.current_step_data && payload.current_step_data.phone_number_id)
+                           || '(no recibido aún — espera a completar el flujo)';
+
+        const wabaId = payload.waba_id
+                    || payload.wabaId
+                    || (payload.current_step_data && payload.current_step_data.waba_id)
+                    || '(no recibido aún)';
+
+        // Indicador de coexistencia — Meta puede enviarlo como:
+        // current_step: 'FINISH', coexistence: true, o en feature_type
+        const coexStatus = payload.coexistence === true
+            ? '✅ Sí — el número seguirá funcionando en la app móvil'
+            : payload.feature_type === 'coexistence'
+            ? '✅ Sí (confirmado por feature_type)'
+            : payload.current_step === 'FINISH'
+            ? '⏳ Flujo completado — verifica en WhatsApp Manager'
+            : '⚠ No confirmado — revisa en WhatsApp Manager → Cuentas → tu número';
+
+        document.getElementById('val-phone-number-id').textContent = phoneNumberId;
+        document.getElementById('val-waba-id').textContent          = wabaId;
+        document.getElementById('val-coexistence').textContent      = coexStatus;
+        document.getElementById('section-credentials').style.display = 'block';
+
+        // Mostrar payload raw para diagnóstico
+        const rawSection = document.getElementById('section-raw');
+        rawSection.classList.add('visible');
+        document.getElementById('raw-payload-display').textContent =
+            JSON.stringify(payload, null, 2);
+    }
+
+    function showError(msg) {
+        setStatus('⚠ ' + msg.split('\n')[0], 'error');
+        const el = document.getElementById('section-error');
+        el.classList.add('visible');
+        document.getElementById('error-display').textContent = msg;
+        document.getElementById('btn-signup').disabled = false;
+    }
+
+    function setStatus(msg, type) {
+        const bar = document.getElementById('status-bar');
+        bar.style.display = 'block';
+        bar.className = 'status-bar ' + (type || 'info');
+        bar.textContent = msg;
+    }
+
+    function copyValue(elementId) {
+        const text = document.getElementById(elementId).textContent.trim();
+        navigator.clipboard.writeText(text).then(() => {
+            setStatus('Copiado: ' + text, 'success');
+        }).catch(() => {
+            // Fallback para navegadores sin clipboard API
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setStatus('Copiado al portapapeles.', 'success');
+        });
+    }
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PASO 4: Cargar el SDK de Facebook de forma asíncrona
+     Se carga al final para no bloquear el renderizado de la página.
+     El SDK llama a window.fbAsyncInit() cuando está listo.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
+
+</body>
+</html>

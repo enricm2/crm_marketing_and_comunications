@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mt_whatsapp_message" model="mail.message.subtype">
+        <field name="name">Mensaje WhatsApp</field>
+        <field name="res_model">crm.lead</field>
+        <field name="default" eval="False"/>
+        <field name="description">Mensaje de WhatsApp</field>
+    </record>
+    <record id="mt_whatsapp_message_partner" model="mail.message.subtype">
+        <field name="name">Mensaje WhatsApp</field>
+        <field name="res_model">res.partner</field>
+        <field name="default" eval="False"/>
+        <field name="description">Mensaje de WhatsApp</field>
+    </record>
+</odoo>

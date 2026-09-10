@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- ── Main container ── -->
+    <t t-name="uniasser_whatsapp.WhatsAppChat">
+        <div class="o_wa_chat_app">
+            <!-- Header -->
+            <div class="o_wa_header">
+                <span class="o_wa_logo">🟢 WhatsApp</span>
+                <select class="o_wa_account_select" t-on-change="onAccountChange">
+                    <option value="" t-att-selected="!state.selectedAccountId">Todas las cuentas</option>
+                    <t t-foreach="state.accounts" t-as="acc" t-key="acc.id">
+                        <option t-att-value="acc.id"
+                                t-att-selected="acc.id === state.selectedAccountId">
+                            <t t-esc="acc.name"/>
+                        </option>
+                    </t>
+                </select>
+            </div>
+            <div class="o_wa_body">
+                <!-- Panel izquierdo: lista de conversaciones -->
+                <ConversationList
+                    conversations="state.conversations"
+                    selectedPartnerId="state.selectedPartnerId"
+                    loading="state.loadingConversations"
+                    onSelect.bind="selectConversation"
+                    onSearch.bind="onSearch"
+                    onNewMessage.bind="openNewMessage"
+                />
+                <!-- Modal nuevo mensaje -->
+                <t t-if="state.showNewMessage">
+                    <NewMessageModal
+                        onClose.bind="closeNewMessage"
+                        onSelect.bind="startNewConversation"
+                    />
+                </t>
+                <!-- Panel derecho: mensajes + info contacto -->
+                <div class="o_wa_right_panel">
+                    <t t-if="state.selectedPartnerId or state.selectedGroupId or state.pendingPhone">
+                        <div class="o_wa_thread_header">
+                            <!-- Avatar + nombre -->
+                            <div class="o_wa_thread_avatar">
+                                <t t-if="state.selectedIsGroup">👥</t>
+                                <t t-elif="state.selectedPartnerId">
+                                    <img t-att-src="'/whatsapp/api/profile_pic?partner_id=' + state.selectedPartnerId"
+                                         class="o_wa_avatar_img"
+                                         t-att-alt="(state.selectedPartnerName || '?')[0].toUpperCase()"
+                                         t-on-error="(ev) => { ev.target.style.display='none'; ev.target.nextElementSibling.style.display='flex'; }"
+                                    />
+                                    <span class="o_wa_avatar_fallback"><t t-esc="(state.selectedPartnerName || '?')[0].toUpperCase()"/></span>
+                                </t>
+                                <t t-else=""><t t-esc="(state.selectedPartnerName || '?')[0].toUpperCase()"/></t>
+                            </div>
+                            <div class="o_wa_thread_contact_info">
+                                <span class="o_wa_contact_name">
+                                    <t t-esc="state.selectedPartnerName"/>
+                                </span>
+                                <t t-if="state.selectedPartnerPhone">
+                                    <span class="o_wa_contact_phone">
+                                        <t t-esc="state.selectedPartnerPhone"/>
+                                    </span>
+                                </t>
+                            </div>
+                            <t t-if="state.selectedLeadName">
+                                <a class="o_wa_lead_link" t-on-click="openLead">
+                                    🔗 <t t-esc="state.selectedLeadName"/>
+                                </a>
+                            </t>
+                            <!-- Botón info -->
+                            <button class="o_wa_info_btn"
+                                    t-att-class="state.showContactInfo ? 'active' : ''"
+                                    t-on-click="toggleContactInfo"
+                                    title="Información del contacto">
+                                ℹ️
+                            </button>
+                        </div>
+                        <div class="o_wa_chat_area">
+                            <div class="o_wa_chat_body">
+                                <MessageThread
+                                    messages="state.messages"
+                                    loading="state.loadingMessages"
+                                />
+                                <WhatsAppComposer
+                                    onSend.bind="sendMessage"
+                                    sending="state.sending"
+                                    accountId="state.selectedAccountId"
+                                />
+                            </div>
+                        <!-- Panel lateral de información del contacto -->
+                        <t t-if="state.showContactInfo">
+                            <div class="o_wa_contact_panel">
+                                <div class="o_wa_contact_panel_header">
+                                    <span>Información del contacto</span>
+                                    <button class="o_wa_contact_panel_close" t-on-click="toggleContactInfo">✕</button>
+                                </div>
+                                <div class="o_wa_contact_panel_body">
+                                    <div class="o_wa_contact_panel_avatar">
+                                        <t t-if="state.selectedIsGroup">👥</t>
+                                        <t t-elif="state.selectedPartnerId">
+                                            <img t-att-src="'/whatsapp/api/profile_pic?partner_id=' + state.selectedPartnerId"
+                                                 class="o_wa_avatar_img o_wa_avatar_img_lg"
+                                                 t-att-alt="(state.selectedPartnerName || '?')[0].toUpperCase()"
+                                                 t-on-error="(ev) => { ev.target.style.display='none'; ev.target.nextElementSibling.style.display='flex'; }"
+                                            />
+                                            <span class="o_wa_avatar_fallback"><t t-esc="(state.selectedPartnerName || '?')[0].toUpperCase()"/></span>
+                                        </t>
+                                        <t t-else=""><t t-esc="(state.selectedPartnerName || '?')[0].toUpperCase()"/></t>
+                                    </div>
+                                    <div class="o_wa_contact_panel_name">
+                                        <t t-esc="state.selectedPartnerName"/>
+                                    </div>
+                                    <t t-if="state.selectedPartnerPhone">
+                                        <div class="o_wa_contact_panel_field">
+                                            <div class="o_wa_contact_panel_label">📱 Teléfono / WhatsApp</div>
+                                            <div class="o_wa_contact_panel_value">
+                                                <t t-esc="state.selectedPartnerPhone"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="state.selectedPartnerEmail">
+                                        <div class="o_wa_contact_panel_field">
+                                            <div class="o_wa_contact_panel_label">✉️ Email</div>
+                                            <div class="o_wa_contact_panel_value">
+                                                <t t-esc="state.selectedPartnerEmail"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="state.selectedLeadName">
+                                        <div class="o_wa_contact_panel_field">
+                                            <div class="o_wa_contact_panel_label">🎯 Oportunidad</div>
+                                            <div class="o_wa_contact_panel_value">
+                                                <a t-on-click="openLead" class="o_wa_contact_panel_link">
+                                                    <t t-esc="state.selectedLeadName"/>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="state.selectedPartnerId">
+                                        <button class="o_wa_contact_panel_btn" t-on-click="openPartner">
+                                            👤 Abrir ficha del contacto
+                                        </button>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                        </div><!-- /o_wa_chat_area -->
+                    </t>
+                    <t t-else="">
+                        <div class="o_wa_empty_state">
+                            <div class="o_wa_empty_icon">💬</div>
+                            <p>Selecciona una conversación o pulsa ✏️ para mensaje nuevo</p>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <!-- ── New Message Modal ── -->
+    <t t-name="uniasser_whatsapp.NewMessageModal">
+        <div class="o_wa_modal_overlay" t-on-click="onOverlayClick">
+            <div class="o_wa_modal">
+                <div class="o_wa_modal_header">
+                    <span>Nuevo mensaje</span>
+                    <button class="o_wa_modal_close" t-on-click="props.onClose">✕</button>
+                </div>
+                <div class="o_wa_modal_body">
+                    <input class="o_wa_modal_input"
+                           type="text"
+                           placeholder="Buscar contacto o introducir número..."
+                           t-model="state.query"
+                           t-on-input="onQueryChange"
+                           autofocus="true"/>
+                    <div class="o_wa_modal_results">
+                        <t t-if="state.loading">
+                            <div class="o_wa_modal_hint">Buscando...</div>
+                        </t>
+                        <t t-elif="state.results.length > 0">
+                            <t t-foreach="state.results" t-as="p" t-key="p.id">
+                                <div class="o_wa_modal_result_item" t-on-click="() => props.onSelect(p.id, p.phone, p.name)">
+                                    <span class="o_wa_modal_result_name"><t t-esc="p.name"/></span>
+                                    <span class="o_wa_modal_result_phone"><t t-esc="p.phone"/></span>
+                                </div>
+                            </t>
+                        </t>
+                        <t t-elif="state.query.length >= 2 and !state.loading">
+                            <div class="o_wa_modal_hint">Sin resultados en contactos.</div>
+                        </t>
+                        <!-- Opción de usar el número directamente si parece un teléfono -->
+                        <t t-if="isPhoneQuery">
+                            <div class="o_wa_modal_result_item o_wa_modal_direct" t-on-click="() => props.onSelect(null, state.query, state.query)">
+                                <span class="o_wa_modal_result_name">📱 Enviar a <t t-esc="state.query"/></span>
+                                <span class="o_wa_modal_result_phone">Número directo</span>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <!-- ── Conversation List ── -->
+    <t t-name="uniasser_whatsapp.ConversationList">
+        <div class="o_wa_left_panel">
+            <div class="o_wa_search_bar">
+                <input type="text" class="o_wa_search_input"
+                       placeholder="Buscar conversación..."
+                       t-on-input="onSearchInput"/>
+                <button class="o_wa_new_btn" t-on-click="props.onNewMessage" title="Nuevo mensaje">✏️</button>
+            </div>
+            <div class="o_wa_conv_list">
+                <t t-if="props.loading">
+                    <div class="o_wa_loading">Cargando...</div>
+                </t>
+                <t t-else="">
+                    <t t-foreach="props.conversations" t-as="conv" t-key="conv.conv_key || conv.partner_id">
+                        <div class="o_wa_conv_item"
+                             t-att-class="(conv.conv_key === props.selectedConvKey ? 'selected' : '') + (conv.unread_count > 0 ? ' has_unread' : '')"
+                             t-on-click="() => this.props.onSelect(conv)">
+                            <!-- Avatar: grupo o foto de perfil con fallback a inicial -->
+                            <div class="o_wa_conv_avatar" t-att-class="conv.is_group ? 'o_wa_conv_avatar_group' : ''">
+                                <t t-if="conv.is_group">👥</t>
+                                <t t-else="">
+                                    <img t-if="conv.partner_id"
+                                         t-att-src="'/whatsapp/api/profile_pic?partner_id=' + conv.partner_id"
+                                         class="o_wa_avatar_img"
+                                         t-att-alt="(conv.display_name || '?')[0].toUpperCase()"
+                                         t-on-error="(ev) => { ev.target.style.display='none'; ev.target.nextElementSibling.style.display='flex'; }"
+                                    />
+                                    <span class="o_wa_avatar_fallback"><t t-esc="(conv.display_name || conv.partner_name || '?')[0].toUpperCase()"/></span>
+                                </t>
+                            </div>
+                            <div class="o_wa_conv_info">
+                                <div class="o_wa_conv_top">
+                                    <!-- Nombre principal: display_name (ya con prioridad resuelta en backend) -->
+                                    <span class="o_wa_conv_name">
+                                        <t t-esc="conv.display_name || conv.partner_name"/>
+                                    </span>
+                                    <span class="o_wa_conv_time">
+                                        <t t-esc="formatTime(conv.last_timestamp)"/>
+                                    </span>
+                                </div>
+                                <!-- Dato secundario: teléfono para contactos, ID para grupos -->
+                                <t t-if="conv.secondary_info">
+                                    <div class="o_wa_conv_secondary">
+                                        <t t-esc="conv.secondary_info"/>
+                                    </div>
+                                </t>
+                                <div class="o_wa_conv_bottom">
+                                    <span class="o_wa_conv_preview">
+                                        <t t-if="conv.direction === 'outbound'">✓ </t>
+                                        <t t-esc="conv.last_message || conv.last_message_type"/>
+                                    </span>
+                                    <t t-if="conv.unread_count > 0">
+                                        <span class="o_wa_unread_badge">
+                                            <t t-esc="conv.unread_count"/>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="props.conversations.length === 0">
+                        <div class="o_wa_no_convs">Sin conversaciones</div>
+                    </t>
+                </t>
+            </div>
+        </div>
+    </t>
+
+    <!-- ── Message Thread ── -->
+    <t t-name="uniasser_whatsapp.MessageThread">
+        <div class="o_wa_message_thread" t-ref="threadEl">
+            <t t-if="props.loading">
+                <div class="o_wa_loading">Cargando mensajes...</div>
+            </t>
+            <t t-else="">
+                <t t-foreach="props.messages" t-as="msg" t-key="msg.id">
+                    <div class="o_wa_message_wrapper"
+                         t-att-class="msg.direction === 'outbound' ? 'outbound' : 'inbound'">
+                        <div class="o_wa_bubble"
+                             t-att-class="msg.direction === 'outbound' ? 'o_wa_bubble_out' : 'o_wa_bubble_in'">
+                            <t t-if="msg.message_type !== 'text'">
+                                <div class="o_wa_media_type">
+                                    <t t-esc="mediaIcon(msg.message_type)"/>
+                                    <t t-esc="mediaLabel(msg.message_type)"/>
+                                </div>
+                            </t>
+                            <t t-if="msg.attachments and msg.attachments.length > 0">
+                                <div class="o_wa_attachments">
+                                    <t t-foreach="msg.attachments" t-as="att" t-key="att.id">
+                                        <a t-att-href="att.url" target="_blank"
+                                           class="o_wa_att_link">
+                                            📎 <t t-esc="att.name"/>
+                                        </a>
+                                    </t>
+                                </div>
+                            </t>
+                            <t t-if="msg.body">
+                                <div class="o_wa_bubble_body">
+                                    <t t-esc="msg.body"/>
+                                </div>
+                            </t>
+                            <div class="o_wa_bubble_meta">
+                                <span class="o_wa_bubble_time">
+                                    <t t-esc="formatTime(msg.timestamp)"/>
+                                </span>
+                                <t t-if="msg.direction === 'outbound'">
+                                    <span class="o_wa_status_icon">
+                                        <t t-esc="statusIcon(msg.status)"/>
+                                    </span>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </div>
+    </t>
+
+    <!-- ── Composer ── -->
+    <t t-name="uniasser_whatsapp.WhatsAppComposer">
+        <div class="o_wa_composer">
+            <!-- Botón plantillas -->
+            <div class="o_wa_tpl_wrapper">
+                <button class="o_wa_tpl_btn" t-on-click="toggleTemplates" title="Enviar plantilla">
+                    📋
+                </button>
+                <t t-if="state.showTemplates">
+                    <div class="o_wa_tpl_dropdown">
+                        <div class="o_wa_tpl_header">Plantillas aprobadas</div>
+                        <t t-if="state.loadingTemplates">
+                            <div class="o_wa_tpl_hint">Cargando...</div>
+                        </t>
+                        <t t-elif="state.templates.length === 0">
+                            <div class="o_wa_tpl_hint">No hay plantillas aprobadas.</div>
+                        </t>
+                        <t t-else="">
+                            <t t-foreach="state.templates" t-as="tpl" t-key="tpl.id">
+                                <div class="o_wa_tpl_item" t-on-click="() => this.selectTemplate(tpl)">
+                                    <div class="o_wa_tpl_name"><t t-esc="tpl.name"/></div>
+                                    <div class="o_wa_tpl_body"><t t-esc="tpl.body"/></div>
+                                </div>
+                            </t>
+                        </t>
+                    </div>
+                </t>
+            </div>
+            <textarea class="o_wa_composer_input"
+                      t-ref="inputEl"
+                      placeholder="Escribe un mensaje..."
+                      t-on-keydown="onKeyDown"
+                      rows="1"/>
+            <button class="o_wa_send_btn"
+                    t-att-disabled="props.sending"
+                    t-on-click="onSend">
+                <t t-if="props.sending">⏳</t>
+                <t t-else="">➤</t>
+            </button>
+        </div>
+    </t>
+
+</templates>
