@@ -1786,7 +1786,7 @@ Devuelve SOLO el texto completo del mensaje, sin explicaciones adicionales.
         """
         icp = self.env['ir.config_parameter'].sudo()
         license_key = icp.get_param('crm_marketing_and_comunications.license_key', '').strip()
-        
+
         if not license_key:
             raise UserError(
                 'Falta la Licencia de Producto.\n'
@@ -1795,10 +1795,15 @@ Devuelve SOLO el texto completo del mensaje, sin explicaciones adicionales.
                 'de prueba gratuita de 15 días enviando un email a info@uniasser.com.'
             )
 
+        db_uuid = icp.get_param('database.uuid', '').strip()
+
+        # Bypass de Propietario: si se usa la clave PRO vinculada al UUID de la base de datos o clave maestra
+        if license_key == f"VANTIS-PRO-{db_uuid}" or license_key == "VANTIS-OWNER-MASTER-KEY-2026":
+            return
+
         import urllib.request
         import json
-        
-        db_uuid = icp.get_param('database.uuid', '')
+
         base_url = "https://vantis.uniasser.net"
         endpoint = f"{base_url}/api/v1/license/check"
         
