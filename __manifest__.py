@@ -1,6 +1,6 @@
 {
     'name': 'Vantis CRM + Marketing + Communications',
-    'version': '19.0.1.0.0',
+    'version': '18.0.1.0.0',
     'category': 'CRM',
     'summary': 'Vantis CRM, Marketing and Communications Engine',
     'description': """
