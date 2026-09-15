@@ -21,12 +21,23 @@
         <field name="code">action = records.action_add_to_existing_campaign()</field>
     </record>
 
-    <!-- Botón smart en el form del lead -->
+    <!-- Acción masiva en lista de leads: enriquecer con IA -->
+    <record id="action_leads_enrich_bulk" model="ir.actions.server">
+        <field name="name">🔍 Enriquecer con IA (Masivo)</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_enrich_leads_bulk()</field>
+    </record>
+
+    <!-- Botones, campos y pestañas en el form del lead -->
     <record id="crm_lead_view_form_marketing" model="ir.ui.view">
         <field name="name">crm.lead.form.marketing.campaigns</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
+            <!-- Smart buttons inside button_box -->
             <div name="button_box" position="inside">
                 <!-- Contador de campañas -->
                 <button class="oe_stat_button" type="object"
@@ -36,9 +47,29 @@
                     <field name="marketing_campaign_count" widget="statinfo"
                         string="Campañas"/>
                 </button>
+                <!-- Contador de comunicaciones -->
+                <button class="oe_stat_button" type="object"
+                    name="action_open_communications"
+                    icon="fa-comments">
+                    <field name="communication_count" widget="statinfo"
+                        string="Comunicaciones"/>
+                </button>
             </div>
 
-            <!-- Botones de acción en cabecera -->
+            <!-- Botones de acción rápida en cabecera del formulario -->
+            <header position="inside">
+                <button name="action_new_email_communication" type="object"
+                    string="📧 Redactar Email"
+                    class="btn-primary"
+                    help="Redactar un nuevo correo electrónico al cliente usando plantillas unificadas."/>
+                <button name="action_enrich_lead" type="object"
+                    string="🔍 Enriquecer con IA"
+                    class="btn-secondary"
+                    invisible="enrichment_state == 'running'"
+                    help="Ejecuta el scraper de la web de la empresa y genera enriquecimiento inteligente."/>
+            </header>
+
+            <!-- Botones adicionales sobre la cabecera del cuerpo -->
             <div name="button_box" position="after">
                 <div class="o_marketing_campaign_actions" style="margin-bottom: 8px;">
                     <button name="action_create_marketing_campaign" type="object"
@@ -56,6 +87,153 @@
             <xpath expr="//field[@name='email_from']" position="after">
                 <field name="marketing_opt_out" widget="boolean_toggle"/>
             </xpath>
+
+            <!-- Pestañas unificadas de Comunicaciones y Enriquecimiento IA -->
+            <notebook position="inside">
+                <!-- Pestaña de Comunicaciones y Sincronización Gmail -->
+                <page string="Historial Comunicaciones" name="communications">
+                    <group string="Configuración de Sincronización Gmail">
+                        <group>
+                            <field name="gmail_sync_enabled" widget="boolean_toggle"/>
+                            <field name="gmail_last_sync" readonly="1"/>
+                        </group>
+                        <group>
+                            <div class="text-muted" colspan="2">
+                                Si está activa, el proceso en segundo plano buscará y sincronizará automáticamente los correos enviados y recibidos con el email del cliente.
+                            </div>
+                            <button name="action_sync_gmail" type="object"
+                                    string="🔄 Sincronizar Gmail Ahora"
+                                    class="btn btn-secondary mt-2"
+                                    help="Fuerza una sincronización inmediata de correos para este lead."/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Historial de Comunicaciones de Vantis"/>
+                    <div class="mb-3">
+                        <button name="action_new_email_communication" type="object"
+                                string="📧 Redactar nuevo Email"
+                                class="btn btn-primary btn-sm"
+                                help="Redactar un nuevo correo electrónico."/>
+                    </div>
+                    
+                    <field name="communication_ids" nolabel="1">
+                        <list create="0" delete="0" edit="0" default_order="date desc">
+                            <field name="date"/>
+                            <field name="action_type" widget="badge"
+                                   decoration-success="action_type in ('email_sent', 'email_received', 'whatsapp_sent', 'whatsapp_received')"
+                                   decoration-info="action_type == 'call'"
+                                   decoration-warning="action_type == 'meeting'"
+                                   decoration-muted="action_type in ('note', 'document', 'other')"/>
+                            <field name="subject"/>
+                            <field name="user_id"/>
+                            <field name="partner_id" optional="show"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- Pestaña de Enriquecimiento Inteligente de la Web del Cliente -->
+                <page string="Enriquecimiento IA" name="enrichment">
+                    <div class="alert alert-info py-3 mb-3" role="alert" invisible="enrichment_state != 'running'">
+                        <i class="fa fa-spinner fa-spin me-2" title="Cargando"></i> El motor de IA de Vantis está analizando y extrayendo información del sitio web del lead en segundo plano...
+                    </div>
+                    <div class="alert alert-danger py-3 mb-3" role="alert" invisible="not enrichment_error">
+                        <i class="fa fa-exclamation-triangle me-2" title="Error"></i> <strong>Error de Enriquecimiento:</strong> <field name="enrichment_error"/>
+                    </div>
+                    
+                    <group>
+                        <group string="Parámetros de Enriquecimiento">
+                            <field name="lead_url" widget="url" placeholder="https://ejemplo.com"/>
+                            <field name="enrichment_state" widget="badge"
+                                   decoration-info="enrichment_state == 'pending'"
+                                   decoration-warning="enrichment_state == 'running'"
+                                   decoration-success="enrichment_state == 'done'"
+                                   decoration-danger="enrichment_state == 'error'"
+                                   decoration-muted="enrichment_state in ('skipped', 'none')"/>
+                            <field name="enrichment_ok" widget="boolean_toggle" readonly="1"/>
+                            <field name="enrichment_date" readonly="1"/>
+                        </group>
+                        <group string="Datos Clave Encontrados">
+                            <field name="enrichment_company_name" readonly="1"/>
+                            <field name="enrichment_sector" readonly="1"/>
+                            <field name="enrichment_vat" readonly="1"/>
+                            <field name="enrichment_size" readonly="1"/>
+                            <field name="enrichment_probability_ai" widget="progressbar" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Información de Contacto Encontrada">
+                            <field name="enrichment_email_found" widget="email" readonly="1"/>
+                            <field name="enrichment_phone_found" widget="phone" readonly="1"/>
+                            <field name="enrichment_mobile_found" widget="phone" readonly="1"/>
+                            <field name="enrichment_address" readonly="1"/>
+                            <field name="enrichment_country" readonly="1"/>
+                            <div colspan="2" class="mt-2">
+                                <button name="action_copy_enrichment_data" type="object"
+                                        string="📋 Copiar datos de contacto a la ficha"
+                                        class="btn btn-secondary"
+                                        invisible="not enrichment_ok"
+                                        help="Rellena el email y teléfono de la cabecera si están vacíos con la información encontrada por el scraper."/>
+                            </div>
+                        </group>
+                        <group string="Presencia Digital y Redes">
+                            <field name="enrichment_linkedin" widget="url" readonly="1"/>
+                            <field name="enrichment_meta" widget="url" readonly="1"/>
+                            <field name="enrichment_twitter" widget="url" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="🧠 Inteligencia y Análisis Comercial (IA Vantis)"/>
+                    
+                    <div class="row">
+                        <div class="col-12 col-md-6 mb-4">
+                            <div class="card h-100 shadow-sm border-light">
+                                <div class="card-header bg-light border-0 py-3">
+                                    <h6 class="card-title text-primary mb-0"><i class="fa fa-info-circle me-2"></i>Resumen de la Empresa</h6>
+                                </div>
+                                <div class="card-body">
+                                    <field name="enrichment_summary" widget="html" readonly="1"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6 mb-4">
+                            <div class="card h-100 shadow-sm border-light">
+                                <div class="card-header bg-light border-0 py-3">
+                                    <h6 class="card-title text-danger mb-0"><i class="fa fa-crosshairs me-2"></i>Puntos de Dolor Encontrados</h6>
+                                </div>
+                                <div class="card-body">
+                                    <field name="enrichment_pain_points" widget="html" readonly="1"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12 col-md-6 mb-4">
+                            <div class="card h-100 shadow-sm border-light">
+                                <div class="card-header bg-light border-0 py-3">
+                                    <h6 class="card-title text-success mb-0"><i class="fa fa-envelope-o me-2"></i>Consejos de Email Comercial</h6>
+                                </div>
+                                <div class="card-body">
+                                    <field name="enrichment_email_advice" widget="html" readonly="1"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6 mb-4">
+                            <div class="card h-100 shadow-sm border-light">
+                                <div class="card-header bg-light border-0 py-3">
+                                    <h6 class="card-title text-warning mb-0"><i class="fa fa-lightbulb-o me-2"></i>Información Adicional Detectada</h6>
+                                </div>
+                                <div class="card-body">
+                                    <field name="enrichment_extra" widget="html" readonly="1"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </page>
+            </notebook>
         </field>
     </record>
 
