@@ -32,5 +32,20 @@
             <field name="user_id" ref="base.user_root"/>
         </record>
 
+        <!-- CRM - Seguimiento Automático con IA (Vantis)
+             Se ejecuta cada 12 horas para buscar leads que estén en etapas de seguimiento,
+             tengan el seguimiento automático activo y hayan superado los X días desde
+             el último contacto, enviándoles un correo adaptado. -->
+        <record id="ir_cron_crm_automatic_followup" model="ir.cron">
+            <field name="name">CRM - Seguimiento Automático con IA (Vantis)</field>
+            <field name="model_id" ref="crm.model_crm_lead"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_automatic_followup()</field>
+            <field name="interval_number">12</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
     </data>
 </odoo>

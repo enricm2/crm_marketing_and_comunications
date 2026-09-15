@@ -11,8 +11,37 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 
+class CrmStage(models.Model):
+    _inherit = 'crm.stage'
+
+    x_is_followup_stage = fields.Boolean(
+        string='Es etapa de seguimiento',
+        default=False,
+        help='Si está marcado, las iniciativas en esta etapa se considerarán en fase de seguimiento por la IA.',
+    )
+
+
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
+
+    x_followup_auto_enabled = fields.Boolean(
+        string='Seguimiento Automático Activo',
+        default=False,
+        help='Si está activo, el sistema enviará correos de seguimiento de forma automática si no hay respuesta en X días.',
+    )
+    x_followup_auto_days = fields.Integer(
+        string='Días de espera seguimiento',
+        default=7,
+        help='Días que deben transcurrir desde la última comunicación para que se dispare el seguimiento automático.',
+    )
+    x_followup_auto_style = fields.Selection([
+        ('ai', 'Generado por IA (Personalizado en base a historial)'),
+        ('template', 'Usar plantilla estática seleccionada'),
+    ], string='Estilo de seguimiento automático', default='ai')
+    x_followup_auto_template_id = fields.Many2one(
+        'crm.email.template',
+        string='Plantilla seguimiento automático',
+    )
 
     communication_ids = fields.One2many(
         'crm.communication',
@@ -699,3 +728,134 @@ class CrmLead(models.Model):
                 'default_stage_source_id': self.stage_id.id if len(self) == 1 else False,
             },
         }
+
+    @api.model
+    def _cron_automatic_followup(self):
+        """Procesa el seguimiento automático para leads calificados."""
+        leads = self.search([
+            ('x_followup_auto_enabled', '=', True),
+            ('probability', '<', 100), # no ganado/cerrado con éxito
+            ('active', '=', True),
+        ])
+        for lead in leads:
+            # Comprobar si la etapa actual es de seguimiento
+            is_followup = (
+                lead.stage_id.x_is_followup_stage 
+                or any(word in (lead.stage_id.name or "").lower() for word in ('seguimiento', 'followup', 'follow-up', 'follow up'))
+            )
+            if not is_followup:
+                continue
+
+            # Determinar última comunicación
+            last_comm = self.env['crm.communication'].search([
+                ('lead_id', '=', lead.id)
+            ], order='date desc', limit=1)
+
+            if not last_comm:
+                # Si nunca se ha comunicado, usar write_date o create_date como referencia
+                last_date = lead.write_date or lead.create_date
+                last_type = 'none'
+            else:
+                last_date = last_comm.date
+                last_type = last_comm.action_type
+
+            # Evitar automatización si el cliente ha respondido de último
+            if last_type in ('email_received', 'whatsapp_received'):
+                _logger.info("Automatic followup skipped for lead %s: last interaction was customer reply (%s)", lead.id, last_type)
+                continue
+
+            # Comprobar tiempo de espera
+            days_passed = (fields.Datetime.now() - last_date).days
+            if days_passed < lead.x_followup_auto_days:
+                continue
+
+            # Proceder con el envío automático de seguimiento
+            _logger.info("Triggering automatic follow-up for lead %s (days passed: %d)", lead.id, days_passed)
+            try:
+                lead._send_automatic_followup_email()
+            except Exception as e:
+                _logger.error("Failed automatic follow-up for lead %s: %s", lead.id, str(e))
+
+    def _send_automatic_followup_email(self):
+        self.ensure_one()
+        # Destinatario
+        destinatario = (self.email_from or '').strip()
+        if not destinatario and self.partner_id:
+            destinatario = (self.partner_id.email or '').strip()
+        if not destinatario:
+            _logger.warning("No recipient email for automatic follow-up on lead %s", self.id)
+            return False
+
+        # Generar asunto y cuerpo
+        asunto = f"Seguimiento: {self.name}"
+        cuerpo = ""
+
+        if self.x_followup_auto_style == 'template' and self.x_followup_auto_template_id:
+            cuerpo = self.x_followup_auto_template_id.render_html(self)
+            asunto = self.x_followup_auto_template_id.name or asunto
+        else:
+            # Generar cuerpo con IA (estilo seguimiento)
+            history_lines = []
+            for comm in self.communication_ids[:5]:
+                clean_desc = re.sub(r'<[^>]*>', '', comm.description or '')
+                history_lines.append(f"- [{comm.date}] {comm.action_type}: {comm.subject} (Resumen: {clean_desc[:150]}...)")
+            history_text = "\n".join(history_lines) if history_lines else "No hay conversaciones previas."
+
+            prompt = f"""Eres un ejecutivo de cuentas comercial senior de primer nivel.
+Redacta un correo de SEGUIMIENTO comercial automático, extremadamente breve, directo y profesional en español.
+El contacto {self.contact_name or self.name} de la empresa {self.partner_name or ''} no ha respondido a nuestra última propuesta/interacción.
+
+Directrices estrictas:
+1. Sé extremadamente breve y al grano (menos de 100 palabras). El tono debe ser directo, ejecutivo y muy educado.
+2. Basándote en el historial de conversaciones de abajo, haz un seguimiento breve y natural del último tema tratado. Por ejemplo:
+"Hola {self.contact_name or self.name},
+Espero que todo vaya bien. Según lo que comentamos, quería saber si lo que te propuse [breve resumen adaptado de lo comentado en base al historial] te encaja y quieres que lo veamos de nuevo."
+3. Usa solo etiquetas HTML básicas (<p>, <strong>, <ul>, <li>, <br>). No incluyas firmas simuladas, usa '[Tu Nombre]'.
+
+HISTORIAL RECIENTE:
+{history_text}
+
+PUNTOS DE DOLOR:
+{self.enrichment_pain_points or 'No definidos'}
+"""
+            cuerpo = self.env['marketing.ai.service'].generar(prompt, contexto='Seguimiento_Automatico_IA')
+            if cuerpo:
+                cuerpo = re.sub(r'^```(?:html)?\s*', '', cuerpo.strip())
+                cuerpo = re.sub(r'\s*```$', '', cuerpo)
+
+        if not cuerpo:
+            _logger.warning("No body generated for automatic follow-up on lead %s", self.id)
+            return False
+
+        # Enviar email
+        mail_values = {
+            'subject': asunto,
+            'body_html': cuerpo,
+            'email_to': destinatario,
+            'auto_delete': False,
+            'res_id': self.id,
+            'model': 'crm.lead',
+        }
+        mail = self.env['mail.mail'].create(mail_values)
+        mail.send()
+
+        # Registrar en crm.communication
+        self.env['crm.communication'].create({
+            'lead_id': self.id,
+            'date': fields.Datetime.now(),
+            'action_type': 'email_sent',
+            'subject': asunto,
+            'description': cuerpo,
+            'user_id': self.user_id.id or self.env.user.id,
+            'partner_id': self.partner_id.id if self.partner_id else False,
+            'email_sent_ok': True,
+        })
+
+        # Registrar en chatter del lead
+        self.message_post(
+            body=f"<p><strong>[SEGUIMIENTO AUTOMÁTICO ENVIADO]</strong></p>{cuerpo}",
+            subject=asunto,
+            message_type='email',
+            subtype_xmlid='mail.mt_note',
+        )
+        return True

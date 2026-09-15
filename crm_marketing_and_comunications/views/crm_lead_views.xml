@@ -107,6 +107,20 @@
                                     help="Fuerza una sincronización inmediata de correos para este lead."/>
                         </group>
                     </group>
+
+                    <group string="🤖 Automatización y Seguimiento de Contacto">
+                        <group>
+                            <field name="x_followup_auto_enabled" widget="boolean_toggle"/>
+                            <field name="x_followup_auto_days" invisible="not x_followup_auto_enabled"/>
+                        </group>
+                        <group invisible="not x_followup_auto_enabled">
+                            <field name="x_followup_auto_style" widget="radio"/>
+                            <field name="x_followup_auto_template_id" 
+                                   options="{'no_create': True}" 
+                                   invisible="x_followup_auto_style != 'template'"
+                                   required="x_followup_auto_style == 'template' and x_followup_auto_enabled"/>
+                        </group>
+                    </group>
                     
                     <separator string="Historial de Comunicaciones de Vantis"/>
                     <div class="mb-3">
@@ -248,6 +262,18 @@
                     class="dropdown-item">Nueva campaña</a>
                 <a role="menuitem" type="object" name="action_add_to_existing_campaign"
                     class="dropdown-item">Añadir a campaña</a>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Heredar formulario de etapas CRM para añadir opción de seguimiento -->
+    <record id="crm_stage_form_inherit_marketing" model="ir.ui.view">
+        <field name="name">crm.stage.form.inherit.marketing</field>
+        <field name="model">crm.stage</field>
+        <field name="inherit_id" ref="crm.crm_stage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_won']" position="after">
+                <field name="x_is_followup_stage" widget="boolean_toggle"/>
             </xpath>
         </field>
     </record>

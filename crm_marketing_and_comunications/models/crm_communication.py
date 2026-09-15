@@ -1,3 +1,4 @@
+import re
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 
@@ -29,6 +30,13 @@ class CrmCommunication(models.Model):
     _name = 'crm.communication'
     _description = 'Historial de Comunicación CRM'
     _order = 'date desc, id desc'
+
+    ai_draft_style = fields.Selection([
+        ('followup', 'Seguimiento inteligente (IA)'),
+        ('first_contact', 'Primer contacto adaptado (IA)'),
+        ('custom', 'Instrucción personalizada... (IA)'),
+    ], string='Estilo de redacción IA', default='followup')
+    ai_draft_instructions = fields.Text(string='Instrucción específica para la IA')
 
     lead_id = fields.Many2one(
         'crm.lead',
@@ -318,3 +326,105 @@ class CrmCommunication(models.Model):
     def action_type_label(self):
         """Devuelve la etiqueta del tipo de acción."""
         return dict(ACTION_TYPE_SELECTION).get(self.action_type, '')
+
+    def action_generate_email_ai(self):
+        self.ensure_one()
+        # Construir el historial previo de contactos
+        history_lines = []
+        for comm in self.lead_id.communication_ids[:5]:
+            snippet = ""
+            if comm.description:
+                clean_desc = re.sub(r'<[^>]*>', '', comm.description)
+                snippet = f" (Resumen: {clean_desc[:150]}...)"
+            history_lines.append(f"- [{comm.date}] {dict(ACTION_TYPE_SELECTION).get(comm.action_type, comm.action_type)}: {comm.subject}{snippet}")
+        history_text = "\n".join(history_lines) if history_lines else "No hay conversaciones previas registradas."
+
+        # Datos del lead y etapa
+        stage_name = self.lead_id.stage_id.name or "Nueva"
+        pain_points = self.lead_id.enrichment_pain_points or "No definidos"
+        company_summary = self.lead_id.enrichment_summary or "No definido"
+        contact_name = self.lead_id.contact_name or self.lead_id.name
+        company_name = self.lead_id.partner_name or ""
+
+        # Generar prompt según estilo elegido
+        if self.ai_draft_style == 'followup':
+            prompt = f"""Eres un ejecutivo de cuentas comercial senior de primer nivel de la empresa.
+Redacta un correo de SEGUIMIENTO comercial hiper-personalizado, extremadamente breve, directo y profesional en español.
+El contacto {contact_name} de la empresa {company_name} se encuentra en la etapa '{stage_name}' de nuestro CRM de ventas.
+
+Sigue estrictamente estas directrices:
+1. Sé muy breve y conciso (menos de 120 palabras). El tono debe ser directo, elegante, profesional y cercano, sin clichés de ventas.
+2. Basándote en el historial de conversaciones previas provisto abajo, elabora una frase muy natural que resuma lo que comentamos o propusimos en la última interacción.
+3. El mensaje debe tener una estructura fluida e informal pero ejecutiva, similar a:
+"Hola {contact_name},
+Espero que todo vaya bien. Según lo que comentamos el pasado [fecha/contacto], quería saber si lo que te propuse [breve resumen directo y adaptado de la propuesta según el historial] te encaja y si quieres que lo veamos de nuevo."
+4. Haz referencia a sus puntos de dolor de forma sutil y natural si es relevante.
+
+INFORMACIÓN DEL CLIENTE:
+- Nombre de contacto: {contact_name}
+- Empresa: {company_name}
+- Etapa del CRM: {stage_name}
+- Puntos de dolor identificados: {pain_points}
+- Resumen de su web: {company_summary}
+
+HISTORIAL DE CONVERSACIONES RECIENTES:
+{history_text}
+
+Escribe exclusivamente el cuerpo del mensaje en formato HTML limpio. Usa únicamente etiquetas estándar como <p>, <strong>, <ul>, <li>, y <br>. No incluyas etiquetas estructurales de documento completo (como <html>, <head>, <body>), firmas simuladas (usa solo '[Tu Nombre]') ni asuntos. No añadas explicaciones de introducción o despedida en tu respuesta.
+"""
+        elif self.ai_draft_style == 'first_contact':
+            prompt = f"""Eres un ejecutivo de cuentas comercial senior de primer nivel.
+Redacta un correo de PRIMER CONTACTO comercial hiper-personalizado, muy breve, directo e incisivo en español para {contact_name} de {company_name}.
+
+Sigue estas directrices:
+1. Sé extremadamente breve y conciso (máximo 120 palabras).
+2. Conéctalo directamente con sus puntos de dolor identificados: {pain_points}.
+3. Propón una breve llamada o reunión para explorar el problema.
+
+CONTEXTO DEL CLIENTE:
+- Nombre de contacto: {contact_name}
+- Empresa: {company_name}
+- Puntos de dolor: {pain_points}
+- Resumen de su web: {company_summary}
+
+Escribe exclusivamente el cuerpo del mensaje en formato HTML limpio. Usa únicamente etiquetas estándar como <p>, <strong>, <ul>, <li>, y <br>. No incluyas etiquetas de documento completo ni explicaciones.
+"""
+        else: # custom
+            instructions = self.ai_draft_instructions or "Redactar un email profesional de seguimiento."
+            prompt = f"""Eres un ejecutivo de cuentas comercial senior de primer nivel.
+Redacta un correo electrónico comercial hiper-personalizado en español siguiendo estrictamente estas instrucciones:
+"{instructions}"
+
+INFORMACIÓN DEL CLIENTE:
+- Nombre de contacto: {contact_name}
+- Empresa: {company_name}
+- Etapa del CRM: {stage_name}
+- Puntos de dolor: {pain_points}
+- Resumen de su web: {company_summary}
+- Historial de conversaciones previas:
+{history_text}
+
+Escribe exclusivamente el cuerpo del mensaje en formato HTML limpio. Usa únicamente etiquetas estándar como <p>, <strong>, <ul>, <li>, y <br>. No incluyas etiquetas de documento completo ni explicaciones.
+"""
+
+        # Invocar servicio de IA unificado
+        ai_service = self.env['marketing.ai.service']
+        try:
+            generated_body = ai_service.generar(prompt, contexto='Borrador_Email_IA')
+            if generated_body:
+                # Limpiar bloques de código markdown que algunos modelos devuelven
+                generated_body = re.sub(r'^```(?:html)?\s*', '', generated_body.strip())
+                generated_body = re.sub(r'\s*```$', '', generated_body)
+                self.description = generated_body
+        except Exception as exc:
+            raise UserError(f"Error al generar el borrador con IA: {str(exc)}")
+
+        # Devolver acción para reabrir el diálogo sin cerrarlo
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+            'context': self.env.context,
+        }

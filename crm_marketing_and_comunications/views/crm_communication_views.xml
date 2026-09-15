@@ -84,6 +84,21 @@
                                 title="Solo hace falta si ya has escrito algo: al elegir plantilla con el cuerpo vacío se rellena solo."/>
                     </group>
 
+                    <!-- Redactor Inteligente con IA -->
+                    <group string="✨ Redactor Inteligente (IA Vantis)" invisible="action_type != 'email_sent'">
+                        <field name="ai_draft_style" widget="radio"/>
+                        <field name="ai_draft_instructions"
+                               placeholder="Ej: Ofrécele un 10% de descuento, o recuérdale nuestra llamada..."
+                               invisible="ai_draft_style != 'custom'"
+                               required="ai_draft_style == 'custom'"/>
+                        <button name="action_generate_email_ai"
+                                type="object"
+                                string="✨ Generar Cuerpo con IA"
+                                class="btn-primary"
+                                icon="fa-magic"
+                                help="Genera un borrador de email comercial personalizado en tiempo real."/>
+                    </group>
+
                     <separator string="Descripción / Notas"
                                invisible="action_type in ('whatsapp_sent', 'whatsapp_received')"/>
                     <group col="1"
