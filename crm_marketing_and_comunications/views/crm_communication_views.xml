@@ -18,12 +18,8 @@
                             type="object"
                             class="btn-primary"
                             invisible="action_type != 'whatsapp_sent' or wa_sent_ok"/>
-                    <field name="email_sent_ok" widget="statusbar"
-                           statusbar_visible="True"
-                           invisible="not email_sent_ok"/>
-                    <field name="wa_sent_ok" widget="statusbar"
-                           statusbar_visible="True"
-                           invisible="not wa_sent_ok"/>
+                    <span class="badge rounded-pill text-bg-success py-2 px-3" invisible="not email_sent_ok">📧 Email enviado</span>
+                    <span class="badge rounded-pill text-bg-success py-2 px-3" invisible="not wa_sent_ok">📱 WhatsApp enviado</span>
                 </header>
                 <sheet>
                     <group>
