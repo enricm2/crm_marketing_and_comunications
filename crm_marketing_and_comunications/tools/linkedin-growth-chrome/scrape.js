@@ -99,29 +99,77 @@ const NOISE = new Set([
   'seguir', 'follow', 'siguiendo', 'following', 'conectar', 'connect',
   'mensaje', 'message', 'ver perfil', 'view profile', 'me gusta', 'like',
   'responder', 'reply', 'ver más', 'see more', '· 1er', '· 2º', '· 3er',
+  'recomendar', 'comentar', 'compartir', 'share', 'enviar', 'send',
+  'out of network', 'fuera de tu red', 'sin conexión',
 ]);
 
+const limpioTxt = (s) => (s || '').replace(/\s+/g, ' ').trim();
+
+/* Lee TODO el texto de un nodo, no solo sus hojas. Los <br> se convierten en
+ * saltos y se descarta lo que solo existe para lectores de pantalla. Sirve
+ * para el cuerpo de un comentario, que LinkedIn parte en <span><br></span> y
+ * que por eso el barrido "solo hojas" se saltaba entero. */
+LG.leerTexto = (el) => {
+  if (!el) return '';
+  const c = el.cloneNode(true);
+  c.querySelectorAll('br').forEach((br) => br.replaceWith('\n'));
+  c.querySelectorAll('.visually-hidden, .a11y-text, [aria-hidden="true"] .white-space-pre')
+    .forEach((n) => n.remove());
+  return (c.textContent || '')
+    .replace(/[ \t ]+/g, ' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+};
+
 /* Dada la fila de una persona, saca nombre y titular.
- * El nombre suele venir duplicado (uno para lectores de pantalla, otro
- * visible); se toma el primero no vacío y se descarta el repetido. */
+ *
+ * Primero por las clases estables del "lockup" de LinkedIn (título y
+ * subtítulo), que valen igual en la lista de reacciones y en los comentarios.
+ * Si esas clases desaparecen en un rediseño, cae al barrido de nodos hoja de
+ * siempre. */
 LG.readPerson = (row, anchor) => {
   const url = LG.normalizeProfileUrl(anchor.getAttribute('href'));
   if (!url) return null;
 
-  const textos = [];
-  row.querySelectorAll('span, p, div').forEach((el) => {
-    if (el.querySelector('span, p, div')) return;      // solo hojas
-    const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
-    if (!t || t.length > 300) return;
-    if (NOISE.has(t.toLowerCase())) return;
-    if (/^[·•∙]?\s*(1|2|3)\s*(º|°|er|ro|nd|rd|st|th)?\s*\+?$/i.test(t)) return;
-    if (!textos.includes(t)) textos.push(t);
-  });
+  let nombre = '';
+  let titular = '';
 
-  const nombre = LG.cleanName(textos[0] || anchor.textContent);
+  const tit = row.querySelector(
+    '.artdeco-entity-lockup__title, .comments-comment-meta__description-title, ' +
+    '.update-components-actor__title'
+  );
+  if (tit) {
+    // El nombre visible es el nodo aria-hidden; el hermano visually-hidden
+    // lleva «Ver el perfil de X», que no es el nombre.
+    const vis = tit.querySelector('[aria-hidden="true"]') || tit;
+    nombre = LG.cleanName(limpioTxt(vis.textContent));
+  }
+  const sub = row.querySelector(
+    '.artdeco-entity-lockup__caption, .comments-comment-meta__description-subtitle, ' +
+    '.update-components-actor__description'
+  );
+  if (sub) titular = limpioTxt(sub.textContent);
+
+  if (!nombre || !titular) {
+    const textos = [];
+    row.querySelectorAll('span, p, div').forEach((el) => {
+      if (el.querySelector('span, p, div')) return;          // solo hojas
+      if (el.closest('.visually-hidden, .a11y-text')) return; // texto de lectores
+      const t = limpioTxt(el.textContent);
+      if (!t || t.length > 300) return;
+      if (NOISE.has(t.toLowerCase())) return;
+      if (/^ver (el )?perfil de /i.test(t)) return;
+      if (/^[·•∙]?\s*(1|2|3)\s*(º|°|er|ro|nd|rd|st|th)?\s*\+?$/i.test(t)) return;
+      if (!textos.includes(t)) textos.push(t);
+    });
+    if (!nombre) nombre = LG.cleanName(textos[0] || anchor.textContent);
+    if (!titular) {
+      titular = textos.find((t) => t !== nombre && t.length > (nombre || '').length) || '';
+    }
+  }
+
   if (!nombre) return null;
-  const titular = textos.find((t) => t !== textos[0] && t.length > nombre.length) || '';
-
   return { nombre, url, titular };
 };
 
@@ -170,20 +218,24 @@ LG.profileHrefs = (root) => {
 LG.findOpenReactorList = () => {
   const candidatos = [];
 
-  // Preferencia: un diálogo abierto con perfiles dentro.
-  document.querySelectorAll('[role="dialog"], .artdeco-modal').forEach((d) => {
+  // Preferencia: el modal de reacciones, o cualquier diálogo con perfiles.
+  document.querySelectorAll(
+    '.social-details-reactors-modal, [role="dialog"], [aria-modal="true"], .artdeco-modal'
+  ).forEach((d) => {
     const n = LG.profileHrefs(d).size;
     if (n > 0) candidatos.push({ el: d, n, tipo: 'diálogo' });
   });
 
-  // Si no hay diálogo reconocible, el bloque más concentrado de perfiles que
-  // no sea la página entera.
+  // Si no hay diálogo, un bloque que DE VERDAD parezca la lista de reacciones:
+  // con filas de perfil ("lockup"), no un contenedor cualquiera con enlaces
+  // /in/ sueltos (eso antes colaba la barra lateral como si fuera la lista).
   if (!candidatos.length) {
     document.querySelectorAll('ul, section, div').forEach((el) => {
       if (el === document.body) return;
+      if (!el.querySelector(
+        '.artdeco-entity-lockup, .social-details-reactors-tab-body-list-item'
+      )) return;
       const n = LG.profileHrefs(el).size;
-      // Al menos 3 perfiles y que no contenga otro bloque igual de denso:
-      // así se coge la lista y no su contenedor.
       if (n < 3) return;
       const hijoDenso = Array.from(el.children).some((c) => LG.profileHrefs(c).size >= n);
       if (hijoDenso) return;
@@ -232,25 +284,55 @@ LG.expandList = async (ctx, onProgress) => {
 LG.collectComments = () => {
   const salida = [];
   const vistos = new Set();
-  // Un comentario es un bloque que contiene un enlace de perfil Y bastante
-  // texto propio. No se usa ningún nombre de clase: LinkedIn los ofusca.
-  document.querySelectorAll('article, li, div[data-id]').forEach((art) => {
-    const a = art.querySelector('a[href*="/in/"]');
+
+  // Nodos de comentario reales: LinkedIn los marca con data-id urn:li:comment
+  // y con la clase comments-comment-entity. Nada de heurística por densidad de
+  // enlaces: eso confundía las filas del modal de reacciones con comentarios.
+  let nodos = Array.from(document.querySelectorAll(
+    'article.comments-comment-entity, article[data-id^="urn:li:comment"], ' +
+    '[data-id^="urn:li:comment"].comments-comment-entity'
+  ));
+  if (!nodos.length) {
+    // Fallback si cambian las clases: artículos con enlace /in/ y texto propio,
+    // nunca dentro del modal de reacciones.
+    nodos = Array.from(document.querySelectorAll('article, li[data-id]')).filter(
+      (a) => a.querySelector('a[href*="/in/"]') && !a.closest('.social-details-reactors-modal')
+    );
+  }
+
+  nodos.forEach((art) => {
+    if (art.closest('.social-details-reactors-modal')) return;
+    const a = art.querySelector(
+      'a.comments-comment-meta__image-link[href*="/in/"], ' +
+      'a.comments-comment-meta__description-container[href*="/in/"], ' +
+      'a[href*="/in/"]'
+    );
     if (!a) return;
-    if (art.querySelectorAll('a[href*="/in/"]').length > 3) return;   // es un contenedor, no una fila
     const url = LG.normalizeProfileUrl(a.getAttribute('href'));
     if (!url || vistos.has(url)) return;
+
     const p = LG.readPerson(art, a);
     if (!p) return;
-    // El texto del comentario: la línea más larga que no sea el nombre ni el titular.
-    const trozos = Array.from(art.querySelectorAll('span, p'))
-      .filter((el) => !el.querySelector('span, p'))
-      .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim())
-      .filter((t) => t.length > 15 && t !== p.nombre && t !== p.titular);
-    const texto = trozos.sort((x, y) => y.length - x.length)[0] || '';
+
+    // Cuerpo del comentario: contenedor de clase estable y su texto ENTERO
+    // (los <br> van envueltos en <span>, así que hay que leerlo con leerTexto,
+    // no con el barrido de hojas). Si no, el bloque de texto más largo.
+    const cuerpo = art.querySelector(
+      '.comments-comment-item__main-content, .comments-comment-item-content-body, ' +
+      '.update-components-text'
+    );
+    let texto = LG.leerTexto(cuerpo);
+    if (!texto) {
+      const bloques = Array.from(art.querySelectorAll('span, p, div'))
+        .filter((el) => !el.querySelector('a[href*="/in/"]'))
+        .map((el) => limpioTxt(el.textContent))
+        .filter((t) => t.length > 15 && t !== p.nombre && t !== p.titular);
+      texto = bloques.sort((x, y) => y.length - x.length)[0] || '';
+    }
     if (!texto) return;
+
     vistos.add(url);
-    salida.push({ ...p, comentario: texto.slice(0, 2000) });
+    salida.push({ ...p, comentario: texto.replace(/\s+/g, ' ').slice(0, 2000) });
   });
   return salida;
 };

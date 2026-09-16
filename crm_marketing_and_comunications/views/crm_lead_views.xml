@@ -21,7 +21,27 @@
         <field name="code">action = records.action_add_to_existing_campaign()</field>
     </record>
 
-    <!-- Botón smart en el form del lead -->
+    <!-- Acción masiva en lista de leads: enriquecer con IA -->
+    <record id="action_leads_enrich_bulk" model="ir.actions.server">
+        <field name="name">🔍 Enriquecer con IA (Masivo)</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_enrich_leads_bulk()</field>
+    </record>
+
+    <!-- Acción masiva en lista de leads: Enviar seguimiento IA (Lote) -->
+    <record id="action_leads_followup_bulk_server" model="ir.actions.server">
+        <field name="name">✉️ Enviar Seguimiento IA (Lote)</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_leads_followup_bulk()</field>
+    </record>
+
+    <!-- Botones, campos y pestañas en el form del lead -->
     <record id="crm_lead_view_form_marketing" model="ir.ui.view">
         <field name="name">crm.lead.form.marketing.campaigns</field>
         <field name="model">crm.lead</field>
@@ -38,7 +58,24 @@
                 </button>
             </div>
 
-            <!-- Botones de acción en cabecera -->
+<!-- Botones de acción rápida en cabecera del formulario -->
+<header position="inside">
+    <button name="action_new_email_communication" type="object"
+        string="📧 Redactar Email"
+        class="btn-primary"
+        help="Redactar un nuevo correo electrónico al cliente usando plantillas unificadas."/>
+    <button name="action_send_ai_followup_lead" type="object"
+        string="✉️ Enviar Seguimiento IA"
+        class="btn-secondary"
+        help="Envía un email de seguimiento altamente personalizado por IA basado en historial, ofertas y dolores."/>
+    <button name="action_enrich_lead" type="object"
+        string="🔍 Enriquecer con IA"
+        class="btn-secondary"
+        invisible="enrichment_state == 'running'"
+        help="Ejecuta el scraper de la web de la empresa y genera enriquecimiento inteligente."/>
+</header>
+
+<!-- Botones adicionales sobre la cabecera del cuerpo -->
             <div name="button_box" position="after">
                 <div class="o_marketing_campaign_actions" style="margin-bottom: 8px;">
                     <button name="action_create_marketing_campaign" type="object"

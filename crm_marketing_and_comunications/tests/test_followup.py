@@ -279,3 +279,72 @@ class TestFollowupLaunch(TransactionCase):
         nuevo, quitados = tpl._dedupe_links(html, url)
         self.assertEqual(quitados, 2)
         self.assertEqual(nuevo.count(f'href="{url}"'), 1)
+
+
+from unittest.mock import patch
+
+class TestCrmLeadFollowup(TransactionCase):
+    """Test unitario para la funcionalidad de seguimiento IA en lote y manual de crm.lead"""
+
+    def test_send_automatic_followup_email_replacing_signature(self):
+        with patch('odoo.addons.crm_marketing_and_comunications.models.ai_service.MarketingAiService.generar') as mock_gen, \
+             patch.object(self.env.registry['mail.mail'], 'send') as mock_send:
+            
+            mock_gen.return_value = "<p>Hola Cliente,<br/>Espero que te interese lo que propusimos.<br/>Atentamente,<br/>[Tu Nombre]</p>"
+            mock_send.return_value = True
+            
+            # Setup
+            stage = self.env['crm.stage'].create({'name': 'Seguimiento', 'x_is_followup_stage': True})
+            user_salesperson = self.env.user
+            lead = self.env['crm.lead'].with_context(sin_enriquecer_al_crear=True).create({
+                'name': 'Lead Test 1',
+                'partner_name': 'Cliente Test 1',
+                'email_from': 'test1@example.com',
+                'type': 'opportunity',
+                'stage_id': stage.id,
+                'user_id': user_salesperson.id,
+            })
+
+            # Ejecutar el envío
+            res = lead._send_automatic_followup_email()
+            self.assertTrue(res)
+            
+            # Buscar la comunicación registrada para comprobar que la firma se reemplazó
+            comm = self.env['crm.communication'].search([('lead_id', '=', lead.id)], limit=1)
+            self.assertTrue(comm)
+            self.assertIn(user_salesperson.name, comm.description)
+            self.assertNotIn('[Tu Nombre]', comm.description)
+
+    def test_action_leads_followup_bulk_sends_emails(self):
+        with patch('odoo.addons.crm_marketing_and_comunications.models.ai_service.MarketingAiService.generar') as mock_gen, \
+             patch.object(self.env.registry['mail.mail'], 'send') as mock_send:
+            
+            mock_gen.return_value = "<p>Hola [Tu Nombre]</p>"
+            mock_send.return_value = True
+            
+            # Setup
+            stage = self.env['crm.stage'].create({'name': 'Seguimiento', 'x_is_followup_stage': True})
+            user_salesperson = self.env.user
+            lead_1 = self.env['crm.lead'].with_context(sin_enriquecer_al_crear=True).create({
+                'name': 'Lead Test 1',
+                'partner_name': 'Cliente Test 1',
+                'email_from': 'test1@example.com',
+                'type': 'opportunity',
+                'stage_id': stage.id,
+                'user_id': user_salesperson.id,
+            })
+            lead_2 = self.env['crm.lead'].with_context(sin_enriquecer_al_crear=True).create({
+                'name': 'Lead Test 2',
+                'partner_name': 'Cliente Test 2',
+                'email_from': 'test2@example.com',
+                'type': 'opportunity',
+                'stage_id': stage.id,
+                'user_id': user_salesperson.id,
+            })
+
+            leads = lead_1 + lead_2
+            res = leads.action_leads_followup_bulk()
+            
+            self.assertEqual(res['type'], 'ir.actions.client')
+            self.assertIn('Se han enviado 2 emails', res['params']['message'])
+

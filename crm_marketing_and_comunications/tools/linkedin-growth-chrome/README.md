@@ -31,7 +31,10 @@ usarla es tuya.
 1. Abre una publicación tuya.
 2. **Abre tú la lista de reacciones** — pulsa donde pone «N reacciones».
    Espera a que aparezcan los nombres.
-3. Pulsa **Importar a LinkedIn Growth**.
+3. Si la publicación tiene comentarios, **baja hasta ellos** para que LinkedIn
+   los cargue (y pulsa «Cargar más comentarios» / «Ver más respuestas» si hace
+   falta). La extensión solo lee los que ya están en pantalla.
+4. Pulsa **Importar a LinkedIn Growth**.
 
 La extensión lee la lista que ya tienes abierta, la despliega hasta el final y
 la manda a Odoo junto con los comentarios de la publicación.
