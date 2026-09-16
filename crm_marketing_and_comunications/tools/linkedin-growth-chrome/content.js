@@ -5,6 +5,16 @@
 const BTN_ID = 'lg-import-btn';
 const TOAST_ID = 'lg-toast-host';
 
+/* Al recargar la extensión, el content script que ya estaba en una pestaña
+ * abierta se queda huérfano: cualquier llamada a chrome.* lanza «Extension
+ * context invalidated». No es un error del usuario, solo hay que recargar la
+ * pestaña para que entre la versión nueva. */
+function esContextoInvalidado(e) {
+  const m = (e && (e.message || e)) + '';
+  return /Extension context invalidated|context invalidated|message port closed/i.test(m)
+    || !chrome.runtime?.id;
+}
+
 /* La interfaz de la extensión vive dentro de un Shadow DOM.
  *
  * Inyectar elementos sueltos en LinkedIn no funciona: sus hojas de estilo y
@@ -161,7 +171,17 @@ async function importar(btn) {
     // Quien comenta manda sobre quien solo reacciona: el comentario vale más
     // puntos y trae texto. Si alguien hizo las dos cosas, se envía la señal
     // de comentario y no se duplica como reacción.
-    const conComentario = new Set(comentarios.map((c) => c.url));
+    //
+    // Ojo: la misma persona sale con URL distinta según dónde: en reacciones
+    // como /in/ACoAA… (URN de miembro) y en comentarios como /in/su-slug. Así
+    // que además de por URL se deduplica por nombre normalizado.
+    const norm = (s) => (s || '').toLowerCase().normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+    const conComentario = new Set();
+    comentarios.forEach((c) => {
+      conComentario.add(c.url);
+      if (c.nombre) conComentario.add('n:' + norm(c.nombre));
+    });
     const filas = [
       ...comentarios.map((c) => ({
         nombre: c.nombre, linkedin_url: c.url, headline: c.titular,
@@ -169,7 +189,7 @@ async function importar(btn) {
         fecha_senal: new Date().toISOString(), post_id: urn,
       })),
       ...reacciones
-        .filter((r) => !conComentario.has(r.url))
+        .filter((r) => !conComentario.has(r.url) && !conComentario.has('n:' + norm(r.nombre)))
         .map((r) => ({
           nombre: r.nombre, linkedin_url: r.url, headline: r.titular,
           tipo_senal: 'reaccion',
@@ -207,7 +227,12 @@ async function importar(btn) {
     console.warn('[LinkedIn Growth] DIAGNÓSTICO', JSON.stringify(LG.diag, null, 2));
     window.__lgDiag = LG.diag;
     estado.host.remove();
-    toast(e.message || String(e), 'error', true, LG.diag);
+    if (esContextoInvalidado(e)) {
+      toast('La extensión se acaba de recargar y esta pestaña sigue con la versión anterior. '
+        + 'Recarga la página (F5) y vuelve a pulsar Importar.', 'error', true);
+    } else {
+      toast(e.message || String(e), 'error', true, LG.diag);
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = original;
@@ -236,7 +261,11 @@ function pintarBoton() {
   dbg.textContent = 'Volcar diagnóstico';
   dbg.addEventListener('click', () => {
     try { LG.dumpDiagnostico(); toast('Diagnóstico descargado en tu carpeta de Descargas.', 'ok'); }
-    catch (e) { toast('No se pudo volcar: ' + (e.message || e), 'error', true); }
+    catch (e) {
+      toast(esContextoInvalidado(e)
+        ? 'La extensión se acaba de recargar. Recarga la página (F5) y vuelve a pulsar.'
+        : 'No se pudo volcar: ' + (e.message || e), 'error', true);
+    }
   });
   cont.appendChild(dbg);
 

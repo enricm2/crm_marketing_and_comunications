@@ -415,6 +415,12 @@ Escribe exclusivamente el cuerpo del mensaje en formato HTML limpio. Usa únicam
                 # Limpiar bloques de código markdown que algunos modelos devuelven
                 generated_body = re.sub(r'^```(?:html)?\s*', '', generated_body.strip())
                 generated_body = re.sub(r'\s*```$', '', generated_body)
+                
+                # Reemplazar placeholder de firma por el nombre del comercial (o usuario activo)
+                comercial_name = self.user_id.name or self.lead_id.user_id.name or self.env.user.name
+                pattern = re.compile(r'\[\s*tu\s*nombre\s*\]', re.IGNORECASE)
+                generated_body = pattern.sub(comercial_name, generated_body)
+                
                 self.description = generated_body
         except Exception as exc:
             raise UserError(f"Error al generar el borrador con IA: {str(exc)}")

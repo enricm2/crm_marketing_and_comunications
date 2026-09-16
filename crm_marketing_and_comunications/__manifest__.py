@@ -1,6 +1,6 @@
 {
     'name': 'CRM Marketing Full Suite',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.1.0',
     'category': 'CRM',
     'summary': 'CRM, Marketing, Communication, LinkedIn, Meta, WhatsApp, Email, AI, Robinson, RGPD',
     'description': """

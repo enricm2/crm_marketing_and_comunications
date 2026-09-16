@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Growth — Uniasser",
-  "version": "1.2.3",
+  "version": "1.2.5",
   "description": "Lee quién ha reaccionado y comentado en tus publicaciones de LinkedIn y lo manda a Odoo. Solo lee: no pulsa nada por ti.",
   "permissions": [
     "storage",

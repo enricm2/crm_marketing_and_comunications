@@ -793,6 +793,10 @@ class CrmLead(models.Model):
         if self.x_followup_auto_style == 'template' and self.x_followup_auto_template_id:
             cuerpo = self.x_followup_auto_template_id.render_html(self)
             asunto = self.x_followup_auto_template_id.name or asunto
+            if cuerpo:
+                comercial_name = self.user_id.name or self.env.user.name
+                pattern = re.compile(r'\[\s*tu\s*nombre\s*\]', re.IGNORECASE)
+                cuerpo = pattern.sub(comercial_name, cuerpo)
         else:
             # Generar cuerpo con IA (estilo seguimiento)
             history_lines = []
@@ -801,27 +805,56 @@ class CrmLead(models.Model):
                 history_lines.append(f"- [{comm.date}] {comm.action_type}: {comm.subject} (Resumen: {clean_desc[:150]}...)")
             history_text = "\n".join(history_lines) if history_lines else "No hay conversaciones previas."
 
+            # Buscar propuestas o presupuestos asociados
+            proposals_text = "No hay propuestas/presupuestos registrados."
+            if 'sale.order' in self.env:
+                try:
+                    orders = self.env['sale.order'].search([
+                        ('opportunity_id', '=', self.id),
+                        ('state', 'not in', ('cancel',))
+                    ], order='create_date desc')
+                    if orders:
+                        proposals_lines = []
+                        for o in orders:
+                            state_val = dict(o._fields['state'].selection).get(o.state, o.state) if hasattr(o._fields['state'], 'selection') else o.state
+                            proposals_lines.append(
+                                f"- Presupuesto {o.name} ({o.date_order.date() if o.date_order else 'Sin fecha'}): "
+                                f"Monto {o.amount_total} {o.currency_id.symbol or ''}, Estado {state_val}"
+                            )
+                        proposals_text = "\n".join(proposals_lines)
+                except Exception as e:
+                    _logger.warning("Error searching sale.order for lead %s: %s", self.id, e)
+
             prompt = f"""Eres un ejecutivo de cuentas comercial senior de primer nivel.
-Redacta un correo de SEGUIMIENTO comercial automático, extremadamente breve, directo y profesional en español.
+Redacta un correo de SEGUIMIENTO comercial altamente personalizado, extremadamente breve, directo y profesional en español.
 El contacto {self.contact_name or self.name} de la empresa {self.partner_name or ''} no ha respondido a nuestra última propuesta/interacción.
 
 Directrices estrictas:
-1. Sé extremadamente breve y al grano (menos de 100 palabras). El tono debe ser directo, ejecutivo y muy educado.
-2. Basándote en el historial de conversaciones de abajo, haz un seguimiento breve y natural del último tema tratado. Por ejemplo:
+1. Sé extremadamente breve y al grano (menos de 100 palabras). El tono debe ser directo, de negocios, cercano y muy profesional, sin sonar insistente o comercial de baja calidad.
+2. Basándote en el historial de conversaciones and las propuestas presentadas provistas abajo, elabora una frase muy natural que haga referencia de manera sutil a lo que propusimos u ofertamos. Por ejemplo:
 "Hola {self.contact_name or self.name},
-Espero que todo vaya bien. Según lo que comentamos, quería saber si lo que te propuse [breve resumen adaptado de lo comentado en base al historial] te encaja y quieres que lo veamos de nuevo."
-3. Usa solo etiquetas HTML básicas (<p>, <strong>, <ul>, <li>, <br>). No incluyas firmas simuladas, usa '[Tu Nombre]'.
+Espero que todo vaya bien. Según lo que comentamos, quería saber si la propuesta de [tema o presupuesto] de la que hablamos te encaja y quieres que lo veamos de nuevo."
+3. Integra sutilmente sus puntos de dolor identificados para recalcar el valor de nuestra propuesta.
+4. Usa solo etiquetas HTML básicas (<p>, <strong>, <ul>, <li>, <br>). No incluyas firmas simuladas, usa '[Tu Nombre]'.
 
-HISTORIAL RECIENTE:
+HISTORIAL RECIENTE DE COMUNICACIONES:
 {history_text}
 
-PUNTOS DE DOLOR:
+PROPUESTAS/PRESUPUESTOS PRESENTADOS:
+{proposals_text}
+
+PUNTOS DE DOLOR IDENTIFICADOS:
 {self.enrichment_pain_points or 'No definidos'}
 """
             cuerpo = self.env['marketing.ai.service'].generar(prompt, contexto='Seguimiento_Automatico_IA')
             if cuerpo:
                 cuerpo = re.sub(r'^```(?:html)?\s*', '', cuerpo.strip())
                 cuerpo = re.sub(r'\s*```$', '', cuerpo)
+                
+                # Reemplazar placeholder de firma por el nombre del comercial asignado (o usuario activo en su defecto)
+                comercial_name = self.user_id.name or self.env.user.name
+                pattern = re.compile(r'\[\s*tu\s*nombre\s*\]', re.IGNORECASE)
+                cuerpo = pattern.sub(comercial_name, cuerpo)
 
         if not cuerpo:
             _logger.warning("No body generated for automatic follow-up on lead %s", self.id)
@@ -840,7 +873,7 @@ PUNTOS DE DOLOR:
         mail.send()
 
         # Registrar en crm.communication
-        self.env['crm.communication'].create({
+        comm = self.env['crm.communication'].create({
             'lead_id': self.id,
             'date': fields.Datetime.now(),
             'action_type': 'email_sent',
@@ -853,9 +886,63 @@ PUNTOS DE DOLOR:
 
         # Registrar en chatter del lead
         self.message_post(
-            body=f"<p><strong>[SEGUIMIENTO AUTOMÁTICO ENVIADO]</strong></p>{cuerpo}",
+            body=f"<p><strong>[SEGUIMIENTO IA ENVIADO]</strong></p>{cuerpo}",
             subject=asunto,
             message_type='email',
             subtype_xmlid='mail.mt_note',
         )
         return True
+
+    def action_send_ai_followup_lead(self):
+        """Envía un email de seguimiento con IA para este lead de forma manual."""
+        self.ensure_one()
+        success = self._send_automatic_followup_email()
+        if success:
+            return {
+                'effect': {
+                    'fadeout': 'slow',
+                    'message': 'Seguimiento IA enviado correctamente',
+                    'type': 'rainbow_man',
+                }
+            }
+        else:
+            raise UserError('No se pudo enviar el seguimiento por IA. Verifica que el lead tenga un correo válido y que no esté excluido.')
+
+    def action_leads_followup_bulk(self):
+        """Envía emails de seguimiento con IA en lote para los leads seleccionados."""
+        enviados = 0
+        fallidos = 0
+        for lead in self:
+            try:
+                # Comprobar si tiene email y no está en exclusión
+                destinatario = (lead.email_from or '').strip()
+                if not destinatario and lead.partner_id:
+                    destinatario = (lead.partner_id.email or '').strip()
+                if not destinatario or lead.marketing_opt_out:
+                    fallidos += 1
+                    continue
+                
+                res = lead._send_automatic_followup_email()
+                if res:
+                    enviados += 1
+                else:
+                    fallidos += 1
+            except Exception as e:
+                _logger.error("Error al enviar seguimiento IA para el lead %s: %s", lead.id, str(e))
+                fallidos += 1
+        
+        # Devolver una notificación de Odoo con el resumen de resultados
+        message = f"Se han enviado {enviados} emails de seguimiento por IA con éxito."
+        if fallidos:
+            message += f" {fallidos} leads se omitieron o fallaron (sin email, excluidos o error de generación)."
+            
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Envío de seguimiento IA finalizado',
+                'message': message,
+                'sticky': False,
+                'type': 'success' if fallidos == 0 else 'warning',
+            }
+        }

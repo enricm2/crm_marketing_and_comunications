@@ -31,6 +31,16 @@
         <field name="code">action = records.action_enrich_leads_bulk()</field>
     </record>
 
+    <!-- Acción masiva en lista de leads: Enviar seguimiento IA (Lote) -->
+    <record id="action_leads_followup_bulk_server" model="ir.actions.server">
+        <field name="name">✉️ Enviar Seguimiento IA (Lote)</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_model_id" ref="crm.model_crm_lead"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_leads_followup_bulk()</field>
+    </record>
+
     <!-- Botones, campos y pestañas en el form del lead -->
     <record id="crm_lead_view_form_marketing" model="ir.ui.view">
         <field name="name">crm.lead.form.marketing.campaigns</field>
@@ -62,6 +72,10 @@
                     string="📧 Redactar Email"
                     class="btn-primary"
                     help="Redactar un nuevo correo electrónico al cliente usando plantillas unificadas."/>
+                <button name="action_send_ai_followup_lead" type="object"
+                    string="✉️ Enviar Seguimiento IA"
+                    class="btn-secondary"
+                    help="Envía un email de seguimiento altamente personalizado por IA basado en historial, ofertas y dolores."/>
                 <button name="action_enrich_lead" type="object"
                     string="🔍 Enriquecer con IA"
                     class="btn-secondary"
