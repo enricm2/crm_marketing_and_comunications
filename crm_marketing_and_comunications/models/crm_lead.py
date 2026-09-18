@@ -412,7 +412,7 @@ class CrmLead(models.Model):
                         mail.select(sf, readonly=True)
                         current_folder = sf
 
-                    _, msg_data = mail.fetch(msg_id, '(RFC822)')
+                    _, msg_data = mail.fetch(msg_id, '(BODY.PEEK[])')
                     raw = msg_data[0][1]
                     msg = email.message_from_bytes(raw)
 
