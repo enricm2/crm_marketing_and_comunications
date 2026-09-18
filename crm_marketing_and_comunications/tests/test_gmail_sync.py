@@ -1,5 +1,6 @@
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import UserError
+from unittest.mock import patch
 
 
 class TestGmailSyncMultiuser(TransactionCase):
@@ -80,3 +81,32 @@ class TestGmailSyncMultiuser(TransactionCase):
         # Para Comercial 2 debe lanzar UserError por falta de contraseña
         with self.assertRaises(UserError):
             self.lead_2._get_imap_config(self.user_salesman_2)
+
+    @patch('odoo.addons.crm_marketing_and_comunications.models.crm_lead.imaplib.IMAP4_SSL')
+    def test_04_gmail_sync_body_peek(self, mock_imap_class):
+        """Verifica que la sincronización use BODY.PEEK[] para evitar marcar correos como leídos."""
+        mock_imap = mock_imap_class.return_value
+        mock_imap.select.return_value = ('OK', [b'1'])
+        mock_imap.search.return_value = ('OK', [b'123'])
+
+        dummy_msg = (
+            b'Subject: Test Subject\n'
+            b'From: cliente1@example.com\n'
+            b'To: comercial1@gmail.com\n'
+            b'Date: Thu, 17 Sep 2026 08:00:00 +0000\n'
+            b'Message-ID: <abc@def>\n\n'
+            b'This is a test message.'
+        )
+        mock_imap.fetch.return_value = ('OK', [(b'123 (BODY[] {123}', dummy_msg), b')'])
+
+        # Eliminar comunicaciones previas del lead para asegurar que se crea la nueva
+        self.env['crm.communication'].search([('lead_id', '=', self.lead_1.id)]).unlink()
+
+        res = self.lead_1._sync_gmail(user=self.user_salesman_1)
+
+        self.assertEqual(res['created'], 1)
+        self.assertEqual(res['skipped'], 0)
+
+        # Verificar que select se llamó con readonly=True y fetch con BODY.PEEK[]
+        mock_imap.select.assert_any_call('Etiqueta1', readonly=True)
+        mock_imap.fetch.assert_called_with(b'123', '(BODY.PEEK[])')
