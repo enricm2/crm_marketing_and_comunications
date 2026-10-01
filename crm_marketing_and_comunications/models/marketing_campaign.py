@@ -413,6 +413,31 @@ class MarketingCampaign(models.Model):
             'target': 'current',
         }
 
+    def action_clear_campaign_leads(self):
+        """Elimina todos los leads seleccionados y las líneas de campaña generadas."""
+        self.ensure_one()
+        if self.state not in ('draft',):
+            raise UserError('Solo se pueden borrar los leads en estado borrador.')
+
+        # Desasociar los leads de la campaña (Many2many)
+        self.write({
+            'lead_ids': [(5, 0, 0)],
+        })
+
+        # Borrar las líneas de campaña asociadas (One2many)
+        if self.campaign_lead_ids:
+            self.campaign_lead_ids.unlink()
+
+        self.message_post(body="Se han borrado todos los leads asociados y líneas de campaña generadas.")
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'marketing.campaign',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     def action_generate_campaign_leads(self):
         """Crea las líneas marketing.campaign.lead para los leads seleccionados."""
         self.ensure_one()
