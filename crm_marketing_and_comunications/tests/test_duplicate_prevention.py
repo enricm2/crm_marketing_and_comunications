@@ -167,3 +167,29 @@ class TestDuplicatePrevention(TransactionCase):
         self.assertTrue(cl_line, "La línea de campaña debería haberse creado")
         self.assertEqual(cl_line.exclusion_reason, 'rgpd_internal', "El lead con baja solicitada debe ser excluido con motivo 'rgpd_internal' inmediatamente")
 
+    def test_04_action_clear_campaign_leads(self):
+        """Verificar que el método action_clear_campaign_leads limpia correctamente los leads y las líneas asociadas."""
+        campaign = self.env['marketing.campaign'].create({
+            'name': 'Test Campaign Clear',
+            'purpose': 'Testing clear action',
+            'target_audience': 'Uniasser testing',
+            'channel_ids': [(4, self.channel_email.id)],
+        })
+
+        # Asociar leads
+        campaign.write({
+            'lead_ids': [(6, 0, [self.lead_1.id, self.lead_3.id])]
+        })
+        self.assertEqual(len(campaign.lead_ids), 2, "Debería haber 2 leads asociados")
+
+        # Generar las líneas de campaña
+        campaign.action_generate_campaign_leads()
+        self.assertEqual(len(campaign.campaign_lead_ids), 2, "Debería haber 2 líneas de campaña")
+
+        # Llamar al botón de limpiar
+        campaign.action_clear_campaign_leads()
+
+        # Verificar que ya no hay leads asociados ni líneas de campaña
+        self.assertEqual(len(campaign.lead_ids), 0, "No debería quedar ningún lead asociado en lead_ids")
+        self.assertEqual(len(campaign.campaign_lead_ids), 0, "No debería quedar ninguna línea en campaign_lead_ids")
+

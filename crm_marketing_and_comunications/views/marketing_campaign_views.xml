@@ -192,10 +192,16 @@
                             </div>
                             <field name="lead_count" readonly="1"/>
                             <field name="lead_ids" widget="many2many_tags"/>
-                            <button name="action_generate_campaign_leads" type="object"
-                                string="Sincronizar líneas de campaña"
-                                class="btn-primary btn-sm"
-                                invisible="state != 'draft'"/>
+                            <div class="o_row" invisible="state != 'draft'">
+                                <button name="action_generate_campaign_leads" type="object"
+                                    string="Sincronizar líneas de campaña"
+                                    class="btn-primary btn-sm"/>
+                                <button name="action_clear_campaign_leads" type="object"
+                                    string="Borrar leads seleccionados"
+                                    class="btn-danger btn-sm"
+                                    confirm="¿Estás seguro de que deseas borrar todos los leads asociados y líneas de campaña generadas?"
+                                    title="Borra todos los leads seleccionados de esta campaña para poder cargar una lista distinta."/>
+                            </div>
                         </group>
                         <group string="Canales de envío">
                             <field name="channel_ids" widget="many2many_tags"/>
